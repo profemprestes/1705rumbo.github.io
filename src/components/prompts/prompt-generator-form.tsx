@@ -1,94 +1,103 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, Wand2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Copy, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type RequestType = 'page' | 'component';
+type ElementType = 'page' | 'component' | '';
+
+const PREDEFINED_INTEGRATION_FILES = [
+  { id: 'navbar', path: 'src/components/layout/navbar.tsx', label: 'Navbar (src/components/layout/navbar.tsx)' },
+  { id: 'homepage', path: 'src/app/page.tsx', label: 'Página de Inicio (src/app/page.tsx)' },
+  { id: 'layout', path: 'src/app/layout.tsx', label: 'Layout Principal (src/app/layout.tsx)' },
+];
 
 export function PromptGeneratorForm() {
-  const [requestType, setRequestType] = useState<RequestType>('page');
-  const [pageName, setPageName] = useState('');
-  const [pageRoute, setPageRoute] = useState('');
-  const [componentName, setComponentName] = useState('');
-  const [componentPath, setComponentPath] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [contentDetails, setContentDetails] = useState('');
-  const [designDetails, setDesignDetails] = useState('');
-  const [reusableComponentName, setReusableComponentName] = useState('');
-  const [reusableComponentPath, setReusableComponentPath] = useState('');
-  const [integrationDetails, setIntegrationDetails] = useState('');
-  const [dependencies, setDependencies] = useState('ShadCN UI, lucide-react, Next.js App Router, TypeScript');
-  const [expectedArtifacts, setExpectedArtifacts] = useState('');
-  const [additionalConsiderations, setAdditionalConsiderations] = useState('Asegúrate de que todo el código sea compatible con Next.js App Router y TypeScript. Sigue las mejores prácticas de accesibilidad.');
-
+  const [elementType, setElementType] = useState<ElementType>('');
+  const [elementName, setElementName] = useState('');
+  const [selectedIntegrationFiles, setSelectedIntegrationFiles] = useState<string[]>([]);
+  const [customIntegrationPaths, setCustomIntegrationPaths] = useState('');
+  const [detailedDescription, setDetailedDescription] = useState('');
+  
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const { toast } = useToast();
+
+  const handleIntegrationFileChange = (filePath: string) => {
+    setSelectedIntegrationFiles(prev => 
+      prev.includes(filePath) ? prev.filter(p => p !== filePath) : [...prev, filePath]
+    );
+  };
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
 
-    let prompt = `Hola, necesito que implementes una nueva sección en RumboEnvios.
+    if (!elementType) {
+      toast({ variant: "destructive", title: "Error", description: "Por favor, selecciona un tipo de elemento." });
+      return;
+    }
+    if (!elementName) {
+      toast({ variant: "destructive", title: "Error", description: "Por favor, ingresa el nombre del nuevo elemento." });
+      return;
+    }
+    if (!detailedDescription) {
+      toast({ variant: "destructive", title: "Error", description: "Por favor, ingresa una descripción detallada." });
+      return;
+    }
 
+    let prompt = `Hola, necesito que implementes una nueva sección o componente en RumboEnvios.
+
+**1. Tipo y Nombre del Elemento:**
+   - Tipo: ${elementType === 'page' ? 'Nueva Página' : 'Nuevo Componente'}
+   - Nombre: '${elementName}'
 `;
 
-    if (requestType === 'page') {
-      prompt += `1. ${pageName ? `Página '${pageName}'` : 'Nueva Página'}:
-   - Ruta Solicitada: '${pageRoute}'.
-   - Instrucción: Por favor, crea esta página en 'src/app${pageRoute.startsWith('/') ? pageRoute : `/${pageRoute}`}/page.tsx' si no existe. Si ya existe una página en esa ruta, modifícala para incorporar los siguientes detalles.
-   - Propósito Principal: ${purpose}
-   - Propósito Detallado y Funcionalidad Clave:\n     ${contentDetails.split('\n').join('\n     ')}
-     (IA: Por favor, infiere los elementos de contenido específicos como títulos, textos, y la estructura de datos necesaria a partir de este propósito detallado y funcionalidad.)
-   - Diseño:\n     ${designDetails.split('\n').join('\n     ')}
+    if (elementType === 'page') {
+      const route = elementName.toLowerCase().replace(/\s+/g, '-');
+      prompt += `   - Ruta: '/${route}' (Crear en 'src/app/${route}/page.tsx')\n`;
+    } else {
+      prompt += `   - Instrucción de Ubicación: Crea el archivo '${elementName}.tsx'. Utiliza tu mejor criterio para la ubicación dentro de 'src/components/'. Si es relevante, crea un subdirectorio (ej. 'src/components/auth/${elementName}.tsx' o 'src/components/ui/${elementName}.tsx').\n`;
+    }
+
+prompt += `
+**2. Descripción Detallada de la Funcionalidad y Contenido:**
+   ${detailedDescription.split('\n').map(line => `   - ${line}`).join('\n')}
+`;
+
+    const allIntegrationPaths = [...selectedIntegrationFiles];
+    if (customIntegrationPaths.trim()) {
+      allIntegrationPaths.push(...customIntegrationPaths.split(',').map(p => p.trim()).filter(p => p));
+    }
+
+    if (allIntegrationPaths.length > 0) {
+      prompt += `
+**3. Integración (Opcional):**
+   - Por favor, integra este nuevo elemento en los siguientes archivos si es aplicable:
+${allIntegrationPaths.map(path => `     - ${path}`).join('\n')}
+   (Por ejemplo, si es un componente, impórtalo y úsalo. Si es una página, añade un enlace en la navegación si se especifica 'navbar.tsx'.)
 `;
     } else {
-      prompt += `1. ${componentName ? `Componente '${componentName}'` : 'Nuevo Componente'}:
-   - Nombre del Componente: '${componentName}.tsx'.
-   - Ruta Sugerida para el Componente: 'src/components/${componentPath}'.
-   - Instrucción: Por favor, crea este componente. Si la ruta sugerida no es óptima o el componente ya existe en una ruta diferente pero relevante, usa tu criterio para la mejor ubicación o para modificar el existente. Si ya existe en la ruta sugerida, modifícalo.
-   - Propósito Principal: ${purpose}
-   - Propósito Detallado y Funcionalidad Clave (props, estado, etc.):\n     ${contentDetails.split('\n').join('\n     ')}
-     (IA: Por favor, infiere los elementos de contenido específicos, las props necesarias, el manejo de estado y la estructura interna a partir de este propósito detallado y funcionalidad.)
-   - Diseño:\n     ${designDetails.split('\n').join('\n     ')}
-`;
-    }
-
-    if (requestType === 'page' && reusableComponentName) {
       prompt += `
-2. Componente Reutilizable (Opcional):
-   - Si consideras que una parte de esta página podría reutilizarse, crea un componente llamado '${reusableComponentName}.tsx'.
-   - Ruta Sugerida para Componente Reutilizable: 'src/components/${reusableComponentPath}'.
-   - Instrucción: Considera la ruta óptima para este componente reutilizable.
+**3. Integración (Opcional):**
+   - No se especificaron archivos de integración. Si es un componente y su uso es obvio en alguna página existente (ej. un nuevo componente de UI general), puedes mostrar un ejemplo de uso.
 `;
     }
 
-    const sectionNumberOffset = (requestType === 'page' && reusableComponentName) ? 1 : 0;
-
     prompt += `
-${2 + sectionNumberOffset}. Integración:
-   ${integrationDetails}
-`;
-
-    prompt += `
-${3 + sectionNumberOffset}. Dependencias Específicas (Asegúrate de que estén listadas en package.json si son nuevas):
-   ${dependencies}
-`;
-
-    prompt += `
-${4 + sectionNumberOffset}. Resumen de Archivos a Generar/Modificar (sé específico sobre crear vs. modificar):
-   ${expectedArtifacts}
-   (Ej: Crear src/app/nueva-ruta/page.tsx. Modificar src/components/existente.tsx para añadir X.)
-`;
-    prompt += `
-${5 + sectionNumberOffset}. Consideraciones Adicionales:
-   ${additionalConsiderations}
+**4. Directrices para la IA (Importante):**
+   - **Diseño y Estilo:** Utiliza componentes de **ShadCN UI** y **Tailwind CSS** para el diseño. Asegura que la implementación sea responsive y siga la estética general de la aplicación (colores primarios: azul cielo #7BC8F6, fondo: gris claro #F5F5F5, acento: verde suave #A0D995).
+   - **Iconos:** Utiliza iconos de **lucide-react** cuando sea apropiado.
+   - **Stack Tecnológico:** Todo el código debe ser compatible con **Next.js App Router** y **TypeScript**.
+   - **Mejores Prácticas:** Sigue las mejores prácticas de accesibilidad (atributos ARIA, semántica HTML).
+   - **Componentes:** Define las props necesarias de manera clara. Maneja el estado interno del componente si es preciso.
+   - **Salida Esperada:** En tu respuesta, detalla los archivos que crearás o modificarás.
 
 ¡Gracias!`;
 
@@ -114,118 +123,77 @@ ${5 + sectionNumberOffset}. Consideraciones Adicionales:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label>Tipo de Solicitud</Label>
-        <RadioGroup value={requestType} onValueChange={(value) => setRequestType(value as RequestType)} className="flex space-x-4">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="page" id="type-page" />
-            <Label htmlFor="type-page">Nueva Página</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="component" id="type-component" />
-            <Label htmlFor="type-component">Nuevo Componente</Label>
-          </div>
-        </RadioGroup>
-      </div>
-
-      {requestType === 'page' && (
-        <>
-          <div className="space-y-2">
-            <Label htmlFor="pageName">Nombre de la Página (ej. Directorio de Transportistas)</Label>
-            <Input id="pageName" value={pageName} onChange={(e) => setPageName(e.target.value)} placeholder="Mi Nueva Página" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="pageRoute">Ruta de la Página (ej. /directorio-transportistas)</Label>
-            <Input id="pageRoute" value={pageRoute} onChange={(e) => setPageRoute(e.target.value)} placeholder="/mi-nueva-pagina" />
-            <p className="text-xs text-muted-foreground">Se creará en `src/app/.../page.tsx`. Si ya existe, se modificará.</p>
-          </div>
-        </>
-      )}
-
-      {requestType === 'component' && (
-        <>
-          <div className="space-y-2">
-            <Label htmlFor="componentName">Nombre del Componente (ej. TransportistaCard)</Label>
-            <Input id="componentName" value={componentName} onChange={(e) => setComponentName(e.target.value)} placeholder="MiNuevoComponente" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="componentPath">Ruta Sugerida para el Componente (dentro de src/components/, ej. transportistas)</Label>
-            <Input id="componentPath" value={componentPath} onChange={(e) => setComponentPath(e.target.value)} placeholder="shared/" />
-            <p className="text-xs text-muted-foreground">Ej: si pones 'forms', se sugerirá 'src/components/forms/'. Se usará criterio para la ubicación óptima o para modificar uno existente.</p>
-          </div>
-        </>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="purpose">Propósito Principal de la Página/Componente</Label>
-        <Textarea id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={requestType === 'page' ? "Esta página permitirá al usuario..." : "Este componente se usará para..."} />
+        <Label htmlFor="elementType">Tipo de Elemento</Label>
+        <Select value={elementType} onValueChange={(value) => setElementType(value as ElementType)}>
+          <SelectTrigger id="elementType">
+            <SelectValue placeholder="Selecciona un tipo de elemento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="page">Página</SelectItem>
+            <SelectItem value="component">Componente</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="contentDetails">Propósito Detallado y Funcionalidad Clave</Label>
-        <Textarea 
-          id="contentDetails" 
-          value={contentDetails} 
-          onChange={(e) => setContentDetails(e.target.value)} 
-          rows={5} 
-          placeholder={requestType === 'page' ? "La página debe permitir: \n- Ver una lista de X. \n- Filtrar por Y. \n- Realizar la acción Z." : "El componente debe: \n- Aceptar las props A, B. \n- Manejar el estado C. \n- Desencadenar la función D al hacer clic."} 
+        <Label htmlFor="elementName">Nombre del Nuevo Elemento</Label>
+        <Input 
+          id="elementName" 
+          value={elementName} 
+          onChange={(e) => setElementName(e.target.value)} 
+          placeholder="Ej: HeroBanner, UserProfileCard, settings.ts" 
         />
-        <p className="text-xs text-muted-foreground">Describe qué debe hacer y cómo debe funcionar. La IA inferirá los elementos de contenido específicos.</p>
+         <p className="text-xs text-muted-foreground">
+          Para páginas, usa un nombre descriptivo (ej: "Configuración de Cuenta"). Para componentes, usa PascalCase (ej: "UserProfileCard").
+        </p>
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="designDetails">Detalles de Diseño/Estilo</Label>
-        <Textarea id="designDetails" value={designDetails} onChange={(e) => setDesignDetails(e.target.value)} placeholder="Utilizar Card de ShadCN. Debe ser responsive. Sombras suaves." />
+        <Label>Archivo(s) de Integración (Opcional)</Label>
+        <div className="space-y-2 rounded-md border p-4">
+          {PREDEFINED_INTEGRATION_FILES.map(file => (
+            <div key={file.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`integration-${file.id}`}
+                checked={selectedIntegrationFiles.includes(file.path)}
+                onCheckedChange={() => handleIntegrationFileChange(file.path)}
+              />
+              <Label htmlFor={`integration-${file.id}`} className="font-normal text-sm">{file.label}</Label>
+            </div>
+          ))}
+          <Textarea 
+            id="customIntegrationPaths"
+            value={customIntegrationPaths}
+            onChange={(e) => setCustomIntegrationPaths(e.target.value)}
+            placeholder="O escribe rutas adicionales separadas por coma si no están en la lista..."
+            rows={2}
+            className="mt-2"
+          />
+        </div>
       </div>
 
-      {requestType === 'page' && (
-        <>
-          <div className="space-y-2">
-            <Label htmlFor="reusableComponentName">Componente Reutilizable (Opcional - Nombre, ej. InfoItemCard)</Label>
-            <Input id="reusableComponentName" value={reusableComponentName} onChange={(e) => setReusableComponentName(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="reusableComponentPath">Ruta Sugerida para Componente Reutilizable (Opcional - dentro de src/components/)</Label>
-            <Input id="reusableComponentPath" value={reusableComponentPath} onChange={(e) => setReusableComponentPath(e.target.value)} placeholder="items/" />
-          </div>
-        </>
-      )}
-
       <div className="space-y-2">
-        <Label htmlFor="integrationDetails">Detalles de Integración (cómo se usará o conectará)</Label>
-        <Textarea id="integrationDetails" value={integrationDetails} onChange={(e) => setIntegrationDetails(e.target.value)} placeholder="Añadir enlace en Navbar con texto '...' e icono '...'. Importar componente en 'src/app/otra-pagina/page.tsx' y usarlo así: <MiComponente prop1='valor' />" />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dependencies">Dependencias Específicas (ShadCN, Lucide, NPM)</Label>
-        <Textarea id="dependencies" value={dependencies} onChange={(e) => setDependencies(e.target.value)} />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="expectedArtifacts">Resumen de Archivos a Generar/Modificar</Label>
+        <Label htmlFor="detailedDescription">Descripción Detallada</Label>
         <Textarea 
-          id="expectedArtifacts" 
-          value={expectedArtifacts} 
-          onChange={(e) => setExpectedArtifacts(e.target.value)} 
-          placeholder="Ej: Crear src/app/nueva-ruta/page.tsx. Modificar src/components/existente.tsx para añadir X." 
+          id="detailedDescription" 
+          value={detailedDescription} 
+          onChange={(e) => setDetailedDescription(e.target.value)} 
+          rows={6} 
+          placeholder="Describe la funcionalidad, contenido y cualquier detalle relevante que la IA deba considerar..." 
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="additionalConsiderations">Consideraciones Adicionales</Label>
-        <Textarea id="additionalConsiderations" value={additionalConsiderations} onChange={(e) => setAdditionalConsiderations(e.target.value)} />
-      </div>
-
-      <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-        <Wand2 className="mr-2 h-5 w-5" />
+      <Button type="submit" variant="destructive" className="w-full bg-red-600 hover:bg-red-700 text-white">
+        <FileText className="mr-2 h-5 w-5" />
         Generar Prompt
       </Button>
 
       {generatedPrompt && (
-        <Card className="mt-8 shadow-inner">
+        <Card className="mt-6 shadow-inner">
           <CardHeader>
-            <CardTitle className="text-xl text-accent">Prompt Generado</CardTitle>
+            <CardTitle className="text-lg text-primary">Prompt Técnico Generado</CardTitle>
             <CardDescription>Copia este prompt y pégalo en la conversación con la IA.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -233,7 +201,7 @@ ${5 + sectionNumberOffset}. Consideraciones Adicionales:
               readOnly
               value={generatedPrompt}
               rows={15}
-              className="text-sm font-mono bg-muted/30"
+              className="text-sm font-mono bg-muted/20 border-dashed"
             />
           </CardContent>
           <CardFooter>
@@ -247,4 +215,3 @@ ${5 + sectionNumberOffset}. Consideraciones Adicionales:
     </form>
   );
 }
-

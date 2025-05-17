@@ -5,18 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Generador de Prompts',
-  description: 'Genera prompts detallados para solicitar nuevas funcionalidades o componentes a la IA.',
+  title: 'Definir Elemento',
+  description: 'Completa los detalles para generar tu prompt técnico para la IA.',
 };
 
 export default function PromptsPage() {
   return (
     <div className="space-y-6">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-primary">Generador de Prompts para IA</CardTitle>
-          <CardDescription className="text-lg">
-            Utiliza este formulario para estructurar tu solicitud. Un prompt detallado ayuda a la IA a entender mejor tus necesidades y generar el código correcto.
+          <CardTitle className="text-2xl font-bold text-primary">Definir Elemento</CardTitle>
+          <CardDescription className="text-md">
+            Completa los detalles para generar tu prompt técnico.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -28,3 +28,4 @@ export default function PromptsPage() {
     </div>
   );
 }
+
