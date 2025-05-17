@@ -58,7 +58,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="antialiased flex flex-col min-h-screen bg-background">
+      <body 
+        className="antialiased flex flex-col min-h-screen bg-background"
+        suppressHydrationWarning={true} // Added to attempt to suppress the warning
+      >
         <Navbar />
         <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           {children}
