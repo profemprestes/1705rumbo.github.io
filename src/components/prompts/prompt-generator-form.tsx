@@ -27,7 +27,7 @@ export function PromptGeneratorForm() {
   const [integrationDetails, setIntegrationDetails] = useState('');
   const [dependencies, setDependencies] = useState('ShadCN UI, lucide-react, Next.js App Router, TypeScript');
   const [expectedArtifacts, setExpectedArtifacts] = useState('');
-  const [additionalConsiderations, setAdditionalConsiderations] = useState('Asegúrate de que todo el código sea compatible con Next.js App Router y TypeScript.');
+  const [additionalConsiderations, setAdditionalConsiderations] = useState('Asegúrate de que todo el código sea compatible con Next.js App Router y TypeScript. Sigue las mejores prácticas de accesibilidad.');
 
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const { toast } = useToast();
@@ -35,48 +35,57 @@ export function PromptGeneratorForm() {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
 
-    let prompt = `Hola, necesito que implementes una nueva sección en RumboEnvios para ${requestType === 'page' ? 'crear una nueva página' : 'crear un nuevo componente'}.
+    let prompt = `Hola, necesito que implementes una nueva sección en RumboEnvios.
 
 `;
 
     if (requestType === 'page') {
-      prompt += `1. Nueva Página:
-   - Nombre y Ruta: Crea una nueva página llamada '${pageName}' accesible en la ruta '${pageRoute}'.
-`;
-    } else {
-      prompt += `1. Nuevo Componente:
-   - Nombre y Ruta: Crea un nuevo componente llamado '${componentName}.tsx' en la ruta 'src/components/${componentPath}/'.
-`;
-    }
-
-    prompt += `   - Propósito: ${purpose}
+      prompt += `1. ${pageName ? `Página '${pageName}'` : 'Nueva Página'}:
+   - Ruta Solicitada: '${pageRoute}'.
+   - Instrucción: Por favor, crea esta página en 'src/app${pageRoute.startsWith('/') ? pageRoute : `/${pageRoute}`}/page.tsx' si no existe. Si ya existe una página en esa ruta, modifícala para incorporar los siguientes detalles.
+   - Propósito: ${purpose}
    - Contenido Inicial:\n     ${contentDetails.split('\n').join('\n     ')}
    - Diseño:\n     ${designDetails.split('\n').join('\n     ')}
 `;
+    } else {
+      prompt += `1. ${componentName ? `Componente '${componentName}'` : 'Nuevo Componente'}:
+   - Nombre del Componente: '${componentName}.tsx'.
+   - Ruta Sugerida para el Componente: 'src/components/${componentPath}'.
+   - Instrucción: Por favor, crea este componente. Si la ruta sugerida no es óptima o el componente ya existe en una ruta diferente pero relevante, usa tu criterio para la mejor ubicación o para modificar el existente. Si ya existe en la ruta sugerida, modifícalo.
+   - Propósito: ${purpose}
+   - Detalles del Componente (props, estado, etc.):\n     ${contentDetails.split('\n').join('\n     ')}
+   - Diseño:\n     ${designDetails.split('\n').join('\n     ')}
+`;
+    }
 
     if (requestType === 'page' && reusableComponentName) {
       prompt += `
 2. Componente Reutilizable (Opcional):
-   - Si consideras que una parte de esta página podría reutilizarse, crea un componente llamado '${reusableComponentName}.tsx' en 'src/components/${reusableComponentPath}/'.
+   - Si consideras que una parte de esta página podría reutilizarse, crea un componente llamado '${reusableComponentName}.tsx'.
+   - Ruta Sugerida para Componente Reutilizable: 'src/components/${reusableComponentPath}'.
+   - Instrucción: Considera la ruta óptima para este componente reutilizable.
 `;
     }
 
+    const sectionNumberOffset = (requestType === 'page' && reusableComponentName) ? 1 : 0;
+
     prompt += `
-${(requestType === 'page' && reusableComponentName) ? '3' : '2'}. Integración:
+${2 + sectionNumberOffset}. Integración:
    ${integrationDetails}
 `;
 
     prompt += `
-${(requestType === 'page' && reusableComponentName) ? '4' : '3'}. Dependencias Específicas:
+${3 + sectionNumberOffset}. Dependencias Específicas (Asegúrate de que estén listadas en package.json si son nuevas):
    ${dependencies}
 `;
 
     prompt += `
-${(requestType === 'page' && reusableComponentName) ? '5' : '4'}. Resumen de lo que necesito que generes:
+${4 + sectionNumberOffset}. Resumen de Archivos a Generar/Modificar (sé específico sobre crear vs. modificar):
    ${expectedArtifacts}
+   (Ej: Crear src/app/nueva-ruta/page.tsx. Modificar src/components/existente.tsx para añadir X.)
 `;
     prompt += `
-${(requestType === 'page' && reusableComponentName) ? '6' : '5'}. Consideraciones Adicionales:
+${5 + sectionNumberOffset}. Consideraciones Adicionales:
    ${additionalConsiderations}
 
 ¡Gracias!`;
@@ -127,6 +136,7 @@ ${(requestType === 'page' && reusableComponentName) ? '6' : '5'}. Consideracione
           <div className="space-y-2">
             <Label htmlFor="pageRoute">Ruta de la Página (ej. /directorio-transportistas)</Label>
             <Input id="pageRoute" value={pageRoute} onChange={(e) => setPageRoute(e.target.value)} placeholder="/mi-nueva-pagina" />
+            <p className="text-xs text-muted-foreground">Se creará en `src/app/.../page.tsx`. Si ya existe, se modificará.</p>
           </div>
         </>
       )}
@@ -138,26 +148,26 @@ ${(requestType === 'page' && reusableComponentName) ? '6' : '5'}. Consideracione
             <Input id="componentName" value={componentName} onChange={(e) => setComponentName(e.target.value)} placeholder="MiNuevoComponente" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="componentPath">Ruta del Componente (dentro de src/components/, ej. transportistas)</Label>
+            <Label htmlFor="componentPath">Ruta Sugerida para el Componente (dentro de src/components/, ej. transportistas)</Label>
             <Input id="componentPath" value={componentPath} onChange={(e) => setComponentPath(e.target.value)} placeholder="shared/" />
-            <p className="text-xs text-muted-foreground">Ej: si pones 'forms', el componente se creará en 'src/components/forms/'.</p>
+            <p className="text-xs text-muted-foreground">Ej: si pones 'forms', se sugerirá 'src/components/forms/'. Se usará criterio para la ubicación óptima o para modificar uno existente.</p>
           </div>
         </>
       )}
 
       <div className="space-y-2">
         <Label htmlFor="purpose">Propósito de la Página/Componente</Label>
-        <Textarea id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Esta página mostrará..." />
+        <Textarea id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={requestType === 'page' ? "Esta página mostrará..." : "Este componente se usará para..."} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="contentDetails">Contenido Inicial / Detalles del Componente</Label>
+        <Label htmlFor="contentDetails">{requestType === 'page' ? 'Contenido Inicial de la Página' : 'Detalles del Componente (props, estado, etc.)'}</Label>
         <Textarea id="contentDetails" value={contentDetails} onChange={(e) => setContentDetails(e.target.value)} rows={5} placeholder="Un título principal: '...' \nUna lista con: \n- Item 1 \n- Item 2" />
       </div>
       
       <div className="space-y-2">
         <Label htmlFor="designDetails">Detalles de Diseño/Estilo</Label>
-        <Textarea id="designDetails" value={designDetails} onChange={(e) => setDesignDetails(e.target.value)} placeholder="Utilizar Card de ShadCN. Debe ser responsive." />
+        <Textarea id="designDetails" value={designDetails} onChange={(e) => setDesignDetails(e.target.value)} placeholder="Utilizar Card de ShadCN. Debe ser responsive. Sombras suaves." />
       </div>
 
       {requestType === 'page' && (
@@ -167,15 +177,15 @@ ${(requestType === 'page' && reusableComponentName) ? '6' : '5'}. Consideracione
             <Input id="reusableComponentName" value={reusableComponentName} onChange={(e) => setReusableComponentName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reusableComponentPath">Ruta del Componente Reutilizable (Opcional - dentro de src/components/)</Label>
+            <Label htmlFor="reusableComponentPath">Ruta Sugerida para Componente Reutilizable (Opcional - dentro de src/components/)</Label>
             <Input id="reusableComponentPath" value={reusableComponentPath} onChange={(e) => setReusableComponentPath(e.target.value)} placeholder="items/" />
           </div>
         </>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="integrationDetails">Detalles de Integración</Label>
-        <Textarea id="integrationDetails" value={integrationDetails} onChange={(e) => setIntegrationDetails(e.target.value)} placeholder="Añadir enlace en Navbar con texto '...' e icono '...'. Importar componente en 'src/app/otra-pagina/page.tsx' y usarlo así: <MiComponente />" />
+        <Label htmlFor="integrationDetails">Detalles de Integración (cómo se usará o conectará)</Label>
+        <Textarea id="integrationDetails" value={integrationDetails} onChange={(e) => setIntegrationDetails(e.target.value)} placeholder="Añadir enlace en Navbar con texto '...' e icono '...'. Importar componente en 'src/app/otra-pagina/page.tsx' y usarlo así: <MiComponente prop1='valor' />" />
       </div>
 
       <div className="space-y-2">
@@ -185,7 +195,12 @@ ${(requestType === 'page' && reusableComponentName) ? '6' : '5'}. Consideracione
       
       <div className="space-y-2">
         <Label htmlFor="expectedArtifacts">Resumen de Archivos a Generar/Modificar</Label>
-        <Textarea id="expectedArtifacts" value={expectedArtifacts} onChange={(e) => setExpectedArtifacts(e.target.value)} placeholder="- src/app/nueva-ruta/page.tsx \n- src/components/nuevo-componente.tsx \n- Modificaciones en src/components/layout/navbar.tsx" />
+        <Textarea 
+          id="expectedArtifacts" 
+          value={expectedArtifacts} 
+          onChange={(e) => setExpectedArtifacts(e.target.value)} 
+          placeholder="Ej: Crear src/app/nueva-ruta/page.tsx. Modificar src/components/existente.tsx para añadir X." 
+        />
       </div>
 
       <div className="space-y-2">
