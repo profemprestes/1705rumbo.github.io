@@ -1,8 +1,9 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { Mail, Lock, UserPlus } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react'; // Removed UserPlus as it wasn't used in this file
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,7 @@ function SubmitButton() {
 
 export function SignupForm() {
   const initialState = { message: null, errors: {}, type: null };
-  const [state, dispatch] = useFormState(signup, initialState);
+  const [state, dispatch] = useActionState(signup, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
