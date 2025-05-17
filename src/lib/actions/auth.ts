@@ -20,8 +20,6 @@ const SignupSchema = z.object({
 });
 
 export async function login(prevState: any, formData: FormData) {
-  // const supabase = createSupabaseServerActionClient(); // No longer needed for simulated login
-  
   const validatedFields = LoginSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
@@ -32,29 +30,22 @@ export async function login(prevState: any, formData: FormData) {
     };
   }
 
-  // const { email, password } = validatedFields.data; // Data not used in simulated login
+  const { email, password } = validatedFields.data;
 
-  // SIMULATED LOGIN: Skip Supabase authentication
-  // const { error } = await supabase.auth.signInWithPassword({
-  //   email,
-  //   password,
-  // });
-
-  // if (error) {
-  //   console.error('Login error:', error.message);
-  //   return {
-  //     type: 'error',
-  //     message: 'Error al iniciar sesión: ' + (error.message.includes('Invalid login credentials') ? 'Credenciales inválidas.' : 'Inténtalo de nuevo más tarde.'),
-  //   };
-  // }
-
-  console.log('Simulating successful login for:', validatedFields.data.email);
-
-  // Directly proceed as if login was successful
-  revalidatePath('/', 'layout');
-  redirect('/');
+  // SIMULATED LOGIN: Check specific credentials
+  if (email === 'admin@example.com' && password === '123456') {
+    console.log('Simulating successful login for admin@example.com');
+    revalidatePath('/', 'layout');
+    redirect('/');
+  } else {
+    console.log('Simulated login failed for:', email);
+    return {
+      type: 'error',
+      message: 'Credenciales simuladas inválidas. Intenta con admin@example.com y 123456.',
+    };
+  }
   
-  // This part will not be reached due to redirect, but kept for structure if simulation is removed
+  // This part will not be reached due to redirect or error return for simulation
   return {
     type: 'success',
     message: 'Inicio de sesión simulado exitosamente.',
