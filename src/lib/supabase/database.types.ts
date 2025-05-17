@@ -1,3 +1,4 @@
+
 // This file is a placeholder for your Supabase database types.
 // You can generate this file using the Supabase CLI:
 // supabase gen types typescript --project-id <your-project-id> --schema public > src/lib/supabase/database.types.ts
@@ -14,48 +15,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      // Add your table definitions here
-      // Example:
-      // profiles: {
-      //   Row: {
-      //     id: string
-      //     updated_at: string | null
-      //     username: string | null
-      //     full_name: string | null
-      //     avatar_url: string | null
-      //     website: string | null
-      //   }
-      //   Insert: {
-      //     id: string
-      //     updated_at?: string | null
-      //     username?: string | null
-      //     full_name?: string | null
-      //     avatar_url?: string | null
-      //     website?: string | null
-      //   }
-      //   Update: {
-      //     id?: string
-      //     updated_at?: string | null
-      //     username?: string | null
-      //     full_name?: string | null
-      //     avatar_url?: string | null
-      //     website?: string | null
-      //   }
-      //   Relationships: [
-      //     {
-      //       foreignKeyName: "profiles_id_fkey"
-      //       columns: ["id"]
-      //       referencedRelation: "users"
-      //       referencedColumns: ["id"]
-      //     }
-      //   ]
-      // }
+      profiles: {
+        Row: {
+          id: string // UUID, references auth.users.id
+          created_at: string // TIMESTAMPTZ
+          updated_at: string // TIMESTAMPTZ
+          full_name: string | null
+          avatar_url: string | null
+          username: string | null
+        }
+        Insert: {
+          id: string // UUID, references auth.users.id
+          created_at?: string // TIMESTAMPTZ, defaults to NOW()
+          updated_at?: string // TIMESTAMPTZ, defaults to NOW()
+          full_name?: string | null
+          avatar_url?: string | null
+          username?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string // TIMESTAMPTZ, will be updated by trigger
+          full_name?: string | null
+          avatar_url?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey" // Constraint name from SQL
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users" // Supabase's auth.users table
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       // Add your view definitions here
     }
     Functions: {
       // Add your function definitions here
+      // Example of how handle_profile_updated_at might be typed if directly callable via RPC
+      // (though it's a trigger function, so not typically called directly):
+      // handle_profile_updated_at: {
+      //   Args: {}
+      //   Returns: unknown // Actually returns a trigger type
+      // }
     }
     Enums: {
       // Add your enum definitions here
