@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -15,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
@@ -45,6 +46,7 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
+    { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
     // Add more links here as needed for shipping management features
     // e.g. { href: '/envios', label: 'Mis Envíos', icon: <Package className="h-4 w-4" /> }
   ];
@@ -88,7 +90,7 @@ export function Navbar() {
         <Button variant="ghost" className={`relative h-10 rounded-full ${isMobile ? 'w-full justify-start px-3 py-2 text-foreground/70 hover:text-foreground' : 'w-10'}`}>
           {isMobile && <UserCircle className="mr-2 h-4 w-4" />}
           <Avatar className={`h-8 w-8 ${isMobile ? 'hidden' : ''}`}>
-            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email || ''} />
             <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
           </Avatar>
           {isMobile && (user.email || 'Mi Cuenta')}
