@@ -43,8 +43,9 @@ export function PromptGeneratorForm() {
       prompt += `1. ${pageName ? `Página '${pageName}'` : 'Nueva Página'}:
    - Ruta Solicitada: '${pageRoute}'.
    - Instrucción: Por favor, crea esta página en 'src/app${pageRoute.startsWith('/') ? pageRoute : `/${pageRoute}`}/page.tsx' si no existe. Si ya existe una página en esa ruta, modifícala para incorporar los siguientes detalles.
-   - Propósito: ${purpose}
-   - Contenido Inicial:\n     ${contentDetails.split('\n').join('\n     ')}
+   - Propósito Principal: ${purpose}
+   - Propósito Detallado y Funcionalidad Clave:\n     ${contentDetails.split('\n').join('\n     ')}
+     (IA: Por favor, infiere los elementos de contenido específicos como títulos, textos, y la estructura de datos necesaria a partir de este propósito detallado y funcionalidad.)
    - Diseño:\n     ${designDetails.split('\n').join('\n     ')}
 `;
     } else {
@@ -52,8 +53,9 @@ export function PromptGeneratorForm() {
    - Nombre del Componente: '${componentName}.tsx'.
    - Ruta Sugerida para el Componente: 'src/components/${componentPath}'.
    - Instrucción: Por favor, crea este componente. Si la ruta sugerida no es óptima o el componente ya existe en una ruta diferente pero relevante, usa tu criterio para la mejor ubicación o para modificar el existente. Si ya existe en la ruta sugerida, modifícalo.
-   - Propósito: ${purpose}
-   - Detalles del Componente (props, estado, etc.):\n     ${contentDetails.split('\n').join('\n     ')}
+   - Propósito Principal: ${purpose}
+   - Propósito Detallado y Funcionalidad Clave (props, estado, etc.):\n     ${contentDetails.split('\n').join('\n     ')}
+     (IA: Por favor, infiere los elementos de contenido específicos, las props necesarias, el manejo de estado y la estructura interna a partir de este propósito detallado y funcionalidad.)
    - Diseño:\n     ${designDetails.split('\n').join('\n     ')}
 `;
     }
@@ -156,13 +158,20 @@ ${5 + sectionNumberOffset}. Consideraciones Adicionales:
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="purpose">Propósito de la Página/Componente</Label>
-        <Textarea id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={requestType === 'page' ? "Esta página mostrará..." : "Este componente se usará para..."} />
+        <Label htmlFor="purpose">Propósito Principal de la Página/Componente</Label>
+        <Textarea id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={requestType === 'page' ? "Esta página permitirá al usuario..." : "Este componente se usará para..."} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="contentDetails">{requestType === 'page' ? 'Contenido Inicial de la Página' : 'Detalles del Componente (props, estado, etc.)'}</Label>
-        <Textarea id="contentDetails" value={contentDetails} onChange={(e) => setContentDetails(e.target.value)} rows={5} placeholder="Un título principal: '...' \nUna lista con: \n- Item 1 \n- Item 2" />
+        <Label htmlFor="contentDetails">Propósito Detallado y Funcionalidad Clave</Label>
+        <Textarea 
+          id="contentDetails" 
+          value={contentDetails} 
+          onChange={(e) => setContentDetails(e.target.value)} 
+          rows={5} 
+          placeholder={requestType === 'page' ? "La página debe permitir: \n- Ver una lista de X. \n- Filtrar por Y. \n- Realizar la acción Z." : "El componente debe: \n- Aceptar las props A, B. \n- Manejar el estado C. \n- Desencadenar la función D al hacer clic."} 
+        />
+        <p className="text-xs text-muted-foreground">Describe qué debe hacer y cómo debe funcionar. La IA inferirá los elementos de contenido específicos.</p>
       </div>
       
       <div className="space-y-2">
@@ -238,3 +247,4 @@ ${5 + sectionNumberOffset}. Consideraciones Adicionales:
     </form>
   );
 }
+
