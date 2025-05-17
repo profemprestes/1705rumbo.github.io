@@ -1,0 +1,174 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package } from 'lucide-react';
+import { logout } from '@/lib/actions/auth';
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+
+export function Navbar() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const supabase = createSupabaseBrowserClient();
+
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setLoading(false);
+    }
+    getUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
+
+  const navLinks = [
+    { href: '/', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
+    // Add more links here as needed for shipping management features
+    // e.g. { href: '/envios', label: 'Mis Envíos', icon: <Package className="h-4 w-4" /> }
+  ];
+
+  const commonLinkClasses = "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors";
+  const activeLinkClasses = "bg-primary/10 text-primary";
+  const inactiveLinkClasses = "text-foreground/70 hover:text-foreground hover:bg-muted";
+
+  const renderNavLinks = (isMobile = false) => navLinks.map(link => (
+    <Link
+      key={link.href}
+      href={link.href}
+      onClick={() => isMobile && setIsMobileMenuOpen(false)}
+      className={`${commonLinkClasses} ${pathname === link.href ? activeLinkClasses : inactiveLinkClasses} ${isMobile ? 'w-full justify-start' : ''}`}
+    >
+      {link.icon}
+      {link.label}
+    </Link>
+  ));
+  
+  const renderAuthButtons = (isMobile = false) => !loading && !user && (
+    <>
+      <Button asChild variant="ghost" className={`${isMobile ? 'w-full justify-start text-foreground/70 hover:text-foreground' : 'text-sm'}`}>
+        <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="flex items-center gap-2">
+          <LogIn className="h-4 w-4" /> Iniciar Sesión
+        </Link>
+      </Button>
+      <Button asChild variant="default" className={`bg-accent hover:bg-accent/90 text-accent-foreground ${isMobile ? 'w-full justify-start' : 'text-sm'}`}>
+        <Link href="/signup" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4" /> Registrarse
+        </Link>
+      </Button>
+    </>
+  );
+
+  const renderUserMenu = (isMobile = false) => !loading && user && (
+    <>
+    {isMobile && <div className="border-t border-border my-2"></div>}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className={`relative h-10 rounded-full ${isMobile ? 'w-full justify-start px-3 py-2 text-foreground/70 hover:text-foreground' : 'w-10'}`}>
+          {isMobile && <UserCircle className="mr-2 h-4 w-4" />}
+          <Avatar className={`h-8 w-8 ${isMobile ? 'hidden' : ''}`}>
+            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+            <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+          </Avatar>
+          {isMobile && (user.email || 'Mi Cuenta')}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">Conectado como</p>
+            <p className="text-xs leading-none text-muted-foreground truncate">
+              {user.email}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {/* Add other user-specific links here if needed */}
+        <DropdownMenuItem asChild>
+          <form action={logout} className="w-full">
+            <button type="submit" className="flex items-center w-full cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Cerrar Sesión</span>
+            </button>
+          </form>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+    </>
+  );
+
+  return (
+    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+          {/* Placeholder for logo */}
+          {/* <img src="https://placehold.co/100x40.png?text=RumboEnvios" alt="RumboEnvios Logo" className="h-8" data-ai-hint="shipping logo" /> */}
+          <Package className="h-8 w-8 text-primary" />
+          <span className="text-xl font-bold text-primary">RumboEnvios</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <div className="hidden items-center space-x-2 md:flex">
+          {renderNavLinks()}
+        </div>
+        <div className="hidden items-center space-x-2 md:flex">
+          {renderAuthButtons()}
+          {renderUserMenu()}
+        </div>
+
+        {/* Mobile Navigation Trigger */}
+        <div className="md:hidden">
+           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Abrir menú</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] p-0">
+              <div className="flex h-full flex-col">
+                <div className="flex items-center justify-between border-b p-4">
+                  <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Package className="h-7 w-7 text-primary" />
+                    <span className="text-lg font-bold text-primary">RumboEnvios</span>
+                  </Link>
+                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
+                    <X className="h-6 w-6" />
+                    <span className="sr-only">Cerrar menú</span>
+                  </Button>
+                </div>
+                <nav className="flex-grow p-4 space-y-2">
+                  {renderNavLinks(true)}
+                  <div className="border-t border-border my-2"></div>
+                  {renderAuthButtons(true)}
+                  {renderUserMenu(true)}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </nav>
+  );
+}
