@@ -18,7 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -149,6 +149,7 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] p-0">
+              <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b p-4">
                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
@@ -174,3 +175,4 @@ export function Navbar() {
     </nav>
   );
 }
+
