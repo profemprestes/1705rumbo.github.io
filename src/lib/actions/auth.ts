@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -19,7 +20,7 @@ const SignupSchema = z.object({
 });
 
 export async function login(prevState: any, formData: FormData) {
-  const supabase = createSupabaseServerActionClient();
+  // const supabase = createSupabaseServerActionClient(); // No longer needed for simulated login
   
   const validatedFields = LoginSchema.safeParse(Object.fromEntries(formData.entries()));
 
@@ -31,23 +32,33 @@ export async function login(prevState: any, formData: FormData) {
     };
   }
 
-  const { email, password } = validatedFields.data;
+  // const { email, password } = validatedFields.data; // Data not used in simulated login
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  // SIMULATED LOGIN: Skip Supabase authentication
+  // const { error } = await supabase.auth.signInWithPassword({
+  //   email,
+  //   password,
+  // });
 
-  if (error) {
-    console.error('Login error:', error.message);
-    return {
-      type: 'error',
-      message: 'Error al iniciar sesión: ' + (error.message.includes('Invalid login credentials') ? 'Credenciales inválidas.' : 'Inténtalo de nuevo más tarde.'),
-    };
-  }
+  // if (error) {
+  //   console.error('Login error:', error.message);
+  //   return {
+  //     type: 'error',
+  //     message: 'Error al iniciar sesión: ' + (error.message.includes('Invalid login credentials') ? 'Credenciales inválidas.' : 'Inténtalo de nuevo más tarde.'),
+  //   };
+  // }
 
+  console.log('Simulating successful login for:', validatedFields.data.email);
+
+  // Directly proceed as if login was successful
   revalidatePath('/', 'layout');
   redirect('/');
+  
+  // This part will not be reached due to redirect, but kept for structure if simulation is removed
+  return {
+    type: 'success',
+    message: 'Inicio de sesión simulado exitosamente.',
+  };
 }
 
 export async function signup(prevState: any, formData: FormData) {
