@@ -35,8 +35,8 @@ export async function login(prevState: any, formData: FormData) {
   // SIMULATED LOGIN: Check specific credentials
   if (email === 'admin@example.com' && password === '123456') {
     console.log('Simulating successful login for admin@example.com');
-    revalidatePath('/', 'layout');
-    redirect('/');
+    revalidatePath('/inicio', 'layout'); // Or revalidatePath('/') if /inicio uses the root layout extensively
+    redirect('/inicio'); // Changed from redirect('/')
   } else {
     console.log('Simulated login failed for:', email);
     return {
@@ -107,3 +107,4 @@ export async function logout() {
   revalidatePath('/', 'layout');
   redirect('/login');
 }
+
