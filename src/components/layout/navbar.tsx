@@ -45,7 +45,7 @@ export function Navbar() {
   }, [supabase.auth]);
 
   const navLinks = [
-    { href: '/', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
+    { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> }, // Updated link
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
     // Add more links here as needed for shipping management features
     // e.g. { href: '/envios', label: 'Mis Envíos', icon: <Package className="h-4 w-4" /> }
@@ -123,16 +123,14 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-          {/* Placeholder for logo */}
-          {/* <img src="https://placehold.co/100x40.png?text=RumboEnvios" alt="RumboEnvios Logo" className="h-8" data-ai-hint="shipping logo" /> */}
+        <Link href={user ? "/inicio" : "/"} className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
           <Package className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold text-primary">RumboEnvios</span>
         </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden items-center space-x-2 md:flex">
-          {renderNavLinks()}
+          {user && renderNavLinks() /* Only show nav links if user is logged in */}
         </div>
         <div className="hidden items-center space-x-2 md:flex">
           {renderAuthButtons()}
@@ -149,10 +147,10 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] p-0">
-              <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
+              <SheetTitle className="sr-only">Menú de Navegación</SheetTitle> 
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b p-4">
-                  <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href={user ? "/inicio" : "/"} className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Package className="h-7 w-7 text-primary" />
                     <span className="text-lg font-bold text-primary">RumboEnvios</span>
                   </Link>
@@ -162,7 +160,7 @@ export function Navbar() {
                   </Button>
                 </div>
                 <nav className="flex-grow p-4 space-y-2">
-                  {renderNavLinks(true)}
+                  {user && renderNavLinks(true) /* Only show nav links if user is logged in */}
                   <div className="border-t border-border my-2"></div>
                   {renderAuthButtons(true)}
                   {renderUserMenu(true)}
@@ -175,4 +173,3 @@ export function Navbar() {
     </nav>
   );
 }
-
