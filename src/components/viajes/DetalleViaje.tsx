@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Fragment } from 'react';
@@ -19,19 +20,18 @@ import { Loader2, Info, ListChecks, AlertCircle, UserCircle, Truck, CalendarDays
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Tables, Enums } from '@/lib/supabase/database.types';
 import { useToast } from '@/hooks/use-toast';
+import { ExportarPDFViajeButton } from './ExportarPDFViajeButton'; // Import the new component
 
 type Viaje = Tables<'viajes'>;
 type Reparto = Tables<'repartos'>;
 type Conductor = Tables<'conductores'>;
 type Empresa = Tables<'empresas'>;
-type User = Tables<'profiles'>; // Assuming profiles table for user details
+type User = Tables<'profiles'>; 
 type EstadoViaje = Enums<'estado_viaje'>;
 type EstadoReparto = Enums<'estado_reparto'>;
 
 type ViajeDetallado = Viaje & {
   conductores: (Conductor & { empresas: Empresa | null }) | null;
-  // For simplicity, we'll show user_id. A join to profiles or auth.users for email/name would be next.
-  // users: Pick<User, 'full_name' | 'email'> | { id: string; email?: string } | null; 
 };
 
 type RepartoConductor = Reparto & {
@@ -64,29 +64,27 @@ export function DetalleViaje({ viajeId, isOpen, setIsOpen }: DetalleViajeProps) 
       setLoading(true);
       setError(null);
       try {
-        // Fetch Viaje details
         const { data: viajeData, error: viajeError } = await supabase
           .from('viajes')
-          .select(`
+          .select(\`
             *,
             conductores (
               *,
               empresas (*)
             )
-          `)
+          \`)
           .eq('id', viajeId)
           .single();
 
         if (viajeError) throw viajeError;
         setViajeCargado(viajeData as ViajeDetallado);
 
-        // Fetch Repartos for this viaje
         const { data: repartosData, error: repartosError } = await supabase
           .from('repartos')
-          .select(`
+          .select(\`
             *,
             conductores (nombre_completo)
-          `)
+          \`)
           .eq('id_viaje', viajeId)
           .order('codigo_reparto', { ascending: true });
 
@@ -236,9 +234,16 @@ export function DetalleViaje({ viajeId, isOpen, setIsOpen }: DetalleViajeProps) 
           </Tabs>
         )}
 
-        <DialogFooter className="mt-6">
+        <DialogFooter className="mt-6 sm:justify-between">
+          {viajeCargado && (
+            <ExportarPDFViajeButton 
+              viaje={viajeCargado} 
+              repartos={repartosDelViaje} 
+              disabled={loading || !!error}
+            />
+          )}
           <DialogClose asChild>
-            <Button variant="outline">Cerrar</Button>
+            <Button variant="outline" className="mt-2 sm:mt-0">Cerrar</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

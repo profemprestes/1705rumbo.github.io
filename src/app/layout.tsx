@@ -76,8 +76,8 @@ export default function RootLayout({
             id="google-maps-script"
             src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&callback=initMap`}
             strategy="afterInteractive"
-            async
             defer
+            loading="async"
           />
         )}
         {/* Define a dummy initMap if callback is used and not defined elsewhere, or remove callback=initMap if not needed for Places library init */}
