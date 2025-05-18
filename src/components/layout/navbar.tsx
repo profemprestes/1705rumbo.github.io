@@ -37,6 +37,8 @@ export function Navbar() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      // Ensure loading is set to false once auth state is confirmed
+      setLoading(false);
     });
 
     return () => {
@@ -44,9 +46,8 @@ export function Navbar() {
     };
   }, [supabase.auth]);
 
-  // Links comunes que no requieren autenticación (si los hubiera)
   const commonNavLinks = [
-    // Ejemplo: { href: '/public-page', label: 'Página Pública', icon: <Package className="h-4 w-4" /> },
+    // Example: { href: '/public-page', label: 'Página Pública', icon: <Package className="h-4 w-4" /> },
   ];
 
   const authenticatedNavLinks = [
@@ -134,7 +135,7 @@ export function Navbar() {
         {/* Desktop Navigation */}
         <div className="hidden items-center space-x-2 md:flex">
           {renderNavLinksList(commonNavLinks)}
-          {user && renderNavLinksList(authenticatedNavLinks)}
+          {!loading && user && renderNavLinksList(authenticatedNavLinks)}
         </div>
         <div className="hidden items-center space-x-2 md:flex">
           {renderAuthButtons()}
@@ -165,10 +166,10 @@ export function Navbar() {
                 </div>
                 <nav className="flex-grow p-4 space-y-2">
                   {renderNavLinksList(commonNavLinks, true)}
-                  {user && renderNavLinksList(authenticatedNavLinks, true)}
+                  {!loading && user && renderNavLinksList(authenticatedNavLinks, true)}
                   
                   {/* Divider for mobile menu if there are common links and user is logged out, or if there are auth links and user is logged in */}
-                  {(!user && commonNavLinks.length > 0 && renderAuthButtons(true)) && <div className="border-t border-border my-2"></div>}
+                  {(!loading && !user && commonNavLinks.length > 0 && renderAuthButtons(true)) && <div className="border-t border-border my-2"></div>}
                   {(user && authenticatedNavLinks.length > 0 && commonNavLinks.length > 0) && <div className="border-t border-border my-2"></div>}
 
                   {renderAuthButtons(true)}
