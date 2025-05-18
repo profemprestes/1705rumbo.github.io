@@ -161,7 +161,7 @@ export type Database = {
           nombre_completo: string
           telefono: string | null
           email: string | null
-          password_temporal: string | null
+          password_temporal: string | null // Consider security implications
           id_empresa_asociada: string | null 
           estado: Database["public"]["Enums"]["estado_conductor"] | null 
           user_id: string | null 
@@ -211,40 +211,27 @@ export type Database = {
           }
         ]
       }
-      repartos: { // New table for deliveries
+      repartos: {
         Row: {
-          id: string // UUID
-          codigo_reparto: number // SERIAL, auto-incrementing
-          fecha_hora_inicio: string // TIMESTAMPTZ
-          fecha_hora_fin_estimada: string | null // TIMESTAMPTZ
-          fecha_hora_fin_real: string | null // TIMESTAMPTZ
-          id_conductor_asignado: string | null // UUID, FK to conductores.id
-          vehiculo_descripcion: string | null // TEXT
-          estado_reparto: Database["public"]["Enums"]["estado_reparto"] | null // ENUM
-          destino_direccion: string | null // TEXT
-          notas: string | null // TEXT
-          user_id: string | null // UUID, references auth.users.id (who created this record)
-          created_at: string // TIMESTAMPTZ
-          updated_at: string // TIMESTAMPTZ
+          id: string
+          codigo_reparto: number
+          id_viaje: string | null // Nueva columna
+          fecha_hora_inicio: string
+          fecha_hora_fin_estimada: string | null
+          fecha_hora_fin_real: string | null
+          id_conductor_asignado: string | null
+          vehiculo_descripcion: string | null
+          estado_reparto: Database["public"]["Enums"]["estado_reparto"] | null
+          destino_direccion: string | null
+          notas: string | null
+          user_id: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          id?: string // Default is gen_random_uuid()
-          codigo_reparto?: never // SERIAL, handled by database
-          fecha_hora_inicio?: string // Default is NOW()
-          fecha_hora_fin_estimada?: string | null
-          fecha_hora_fin_real?: string | null
-          id_conductor_asignado?: string | null
-          vehiculo_descripcion?: string | null
-          estado_reparto?: Database["public"]["Enums"]["estado_reparto"] | null // Default is 'Pendiente'
-          destino_direccion?: string | null
-          notas?: string | null
-          user_id?: string | null // Associated app user who created this record
-          created_at?: string // Default is NOW()
-          updated_at?: string // Default is NOW()
-        }
-        Update: {
           id?: string
           codigo_reparto?: never
+          id_viaje?: string | null // Nueva columna
           fecha_hora_inicio?: string
           fecha_hora_fin_estimada?: string | null
           fecha_hora_fin_real?: string | null
@@ -255,7 +242,23 @@ export type Database = {
           notas?: string | null
           user_id?: string | null
           created_at?: string
-          updated_at?: string // Handled by trigger
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          codigo_reparto?: never
+          id_viaje?: string | null // Nueva columna
+          fecha_hora_inicio?: string
+          fecha_hora_fin_estimada?: string | null
+          fecha_hora_fin_real?: string | null
+          id_conductor_asignado?: string | null
+          vehiculo_descripcion?: string | null
+          estado_reparto?: Database["public"]["Enums"]["estado_reparto"] | null
+          destino_direccion?: string | null
+          notas?: string | null
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -270,6 +273,70 @@ export type Database = {
             columns: ["id_conductor_asignado"]
             isOneToOne: false
             referencedRelation: "conductores"
+            referencedColumns: ["id"]
+          },
+          { // Nueva relación
+            foreignKeyName: "repartos_id_viaje_fkey"
+            columns: ["id_viaje"]
+            isOneToOne: false
+            referencedRelation: "viajes"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      viajes: { // Nueva tabla
+        Row: {
+          id: string
+          codigo_viaje: number
+          id_conductor_asignado: string | null
+          vehiculo_descripcion: string | null
+          fecha_hora_inicio_planificado: string
+          fecha_hora_fin_estimada_planificado: string | null
+          estado_viaje: Database["public"]["Enums"]["estado_viaje"]
+          notas_viaje: string | null
+          user_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          codigo_viaje?: never
+          id_conductor_asignado?: string | null
+          vehiculo_descripcion?: string | null
+          fecha_hora_inicio_planificado?: string
+          fecha_hora_fin_estimada_planificado?: string | null
+          estado_viaje?: Database["public"]["Enums"]["estado_viaje"]
+          notas_viaje?: string | null
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          codigo_viaje?: never
+          id_conductor_asignado?: string | null
+          vehiculo_descripcion?: string | null
+          fecha_hora_inicio_planificado?: string
+          fecha_hora_fin_estimada_planificado?: string | null
+          estado_viaje?: Database["public"]["Enums"]["estado_viaje"]
+          notas_viaje?: string | null
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viajes_id_conductor_asignado_fkey"
+            columns: ["id_conductor_asignado"]
+            isOneToOne: false
+            referencedRelation: "conductores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viajes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           }
         ]
@@ -291,7 +358,11 @@ export type Database = {
         Args: {}
         Returns: unknown
       }
-      handle_reparto_updated_at: { // Function for repartos table
+      handle_reparto_updated_at: {
+        Args: {}
+        Returns: unknown
+      }
+      handle_viaje_updated_at: { // Nueva función para trigger
         Args: {}
         Returns: unknown
       }
@@ -299,7 +370,8 @@ export type Database = {
     Enums: {
       type_industria: "delivery" | "viandas" | "mensajeria" | "flex"
       estado_conductor: "Activo" | "Inactivo" | "De Viaje" | "En Descanso"
-      estado_reparto: "Pendiente" | "En Curso" | "Completado" | "Cancelado" // New ENUM
+      estado_reparto: "Pendiente" | "En Curso" | "Completado" | "Cancelado"
+      estado_viaje: "Planificado" | "En Curso" | "Completado" | "Cancelado" // Nuevo ENUM
     }
     CompositeTypes: {
       // Add your composite type definitions here
@@ -386,3 +458,4 @@ export type Enums<
   : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
     ? Database["public"]["Enums"][PublicEnumNameOrOptions]
     : never
+      
