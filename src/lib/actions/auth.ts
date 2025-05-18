@@ -31,25 +31,23 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   const { email, password } = validatedFields.data;
+  const supabase = createSupabaseServerActionClient();
 
-  // SIMULATED LOGIN: Check specific credentials
-  if (email === 'admin@example.com' && password === '123456') {
-    console.log('Simulating successful login for admin@example.com');
-    revalidatePath('/inicio', 'layout'); // Or revalidatePath('/') if /inicio uses the root layout extensively
-    redirect('/inicio'); // Changed from redirect('/')
-  } else {
-    console.log('Simulated login failed for:', email);
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    console.error('Login error:', error.message);
     return {
       type: 'error',
-      message: 'Credenciales simuladas inválidas. Intenta con admin@example.com y 123456.',
+      message: 'Credenciales inválidas. Por favor, inténtalo de nuevo.',
     };
   }
   
-  // This part will not be reached due to redirect or error return for simulation
-  return {
-    type: 'success',
-    message: 'Inicio de sesión simulado exitosamente.',
-  };
+  revalidatePath('/inicio', 'layout'); 
+  redirect('/inicio'); 
 }
 
 export async function signup(prevState: any, formData: FormData) {
@@ -71,7 +69,7 @@ export async function signup(prevState: any, formData: FormData) {
     email,
     password,
     options: {
-      // emailRedirectTo: `${origin}/api/auth/callback`, // Handled by Supabase project settings
+      // emailRedirectTo is configured in Supabase project settings
     },
   });
 
@@ -90,11 +88,6 @@ export async function signup(prevState: any, formData: FormData) {
     };
   }
 
-  // if (data.session) { // Auto-login on signup
-  //   revalidatePath('/', 'layout');
-  //   redirect('/');
-  // }
-
   return {
     type: 'success',
     message: '¡Registro exitoso! Revisa tu correo electrónico para confirmar tu cuenta.',
@@ -107,4 +100,3 @@ export async function logout() {
   revalidatePath('/', 'layout');
   redirect('/login');
 }
-

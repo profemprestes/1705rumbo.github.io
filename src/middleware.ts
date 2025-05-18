@@ -14,12 +14,11 @@ export async function middleware(request: NextRequest) {
 
   // Define public paths that don't require authentication or are part of the auth flow
   const publicPaths = [
-    // Removed '/' from here
     '/login',
     '/signup',
     '/auth/auth-code-error',
-    '/prompts',
-    '/inicio' // Added /inicio as a public path for simulated login flow
+    '/prompts' 
+    // REMOVED: '/inicio' - it's now protected
   ];
 
   const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback');
@@ -31,9 +30,6 @@ export async function middleware(request: NextRequest) {
 
   // if user is not signed in and the current path is not a public one, redirect to /login
   if (!session && !isPublicPath) {
-    // The root path '/' is no longer public.
-    // Any attempt to access a non-public path without a session (including '/')
-    // will now redirect to /login.
     return NextResponse.redirect(new URL('/login', request.url));
   }
   
