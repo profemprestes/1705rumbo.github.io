@@ -5,13 +5,14 @@ import { redirect } from "next/navigation";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { HeroRepartos } from '@/components/repartos/HeroRepartos';
-import { ListarRepartos } from '@/components/repartos/ListarRepartos'; // Import the new component
+import { ListarRepartos } from '@/components/repartos/ListarRepartos';
+import { ListarViajes } from '@/components/viajes/ListarViajes'; // Import the new component
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Gestión de Repartos',
-  description: 'Administra la información de repartos registrados en RumboEnvios.',
+  title: 'Gestión de Repartos y Viajes',
+  description: 'Administra la información de repartos y viajes registrados en RumboEnvios.',
 };
 
 export default async function RepartosPage() {
@@ -39,6 +40,7 @@ export default async function RepartosPage() {
     <div className="space-y-6">
       <HeroRepartos />
       <ListarRepartos />
+      <ListarViajes /> 
     </div>
   );
 }
