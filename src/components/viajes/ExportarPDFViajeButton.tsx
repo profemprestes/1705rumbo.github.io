@@ -2,10 +2,10 @@
 'use client';
 
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable'; // Import autoTable plugin
+// import 'jspdf-autotable'; // Temporarily removed for debugging
 import { Button } from '@/components/ui/button';
 import { FileDown } from 'lucide-react';
-import type { Tables, Enums } from '@/lib/supabase/database.types';
+import type { Tables } from '@/lib/supabase/database.types';
 
 // Re-define or import necessary types, mirroring those in DetalleViaje.tsx
 type Viaje = Tables<'viajes'>;
@@ -114,19 +114,28 @@ export function ExportarPDFViajeButton({ viaje, repartos, disabled }: ExportarPD
         ];
         tableRows.push(repartoData);
       });
+      
+      // The following autoTable call will error if 'jspdf-autotable' is not imported.
+      // This is part of the debugging step.
+      if (typeof (doc as any).autoTable === 'function') {
+        (doc as any).autoTable({
+          head: [tableColumn],
+          body: tableRows,
+          startY: currentY,
+          theme: 'grid',
+          headStyles: { fillColor: [22, 160, 133] }, // Example primary color
+          styles: { fontSize: 8, cellPadding: 1.5 },
+          columnStyles: {
+              1: { cellWidth: 60 }, // Destino
+          }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 10;
+      } else {
+        doc.setFontSize(10);
+        doc.text("La generación de tabla de repartos está temporalmente deshabilitada.", 14, currentY);
+        currentY += 7;
+      }
 
-      (doc as any).autoTable({
-        head: [tableColumn],
-        body: tableRows,
-        startY: currentY,
-        theme: 'grid',
-        headStyles: { fillColor: [22, 160, 133] }, // Example primary color
-        styles: { fontSize: 8, cellPadding: 1.5 },
-        columnStyles: {
-            1: { cellWidth: 60 }, // Destino
-        }
-      });
-      currentY = (doc as any).lastAutoTable.finalY + 10;
     } else {
       if (currentY > pageHeight - 20) {
         doc.addPage();
