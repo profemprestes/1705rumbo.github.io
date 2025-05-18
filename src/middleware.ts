@@ -17,11 +17,10 @@ export async function middleware(request: NextRequest) {
     '/login',
     '/signup',
     '/auth/auth-code-error',
-    // REMOVED: '/prompts' - it's now protected
-    // REMOVED: '/inicio' - it's now protected
+    '/', // Make the root public for landing/welcome
   ];
 
-  const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback') || pathname === '/';
+  const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback');
 
 
   // if user is signed in and the current path is /login or /signup, redirect to /inicio

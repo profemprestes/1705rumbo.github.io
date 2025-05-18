@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2 } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -45,12 +45,13 @@ export function Navbar() {
     };
   }, [supabase.auth]);
 
-  const commonNavLinks = [
+  const commonNavLinks: { href: string; label: string; icon: JSX.Element }[] = [
     // Example: { href: '/public-page', label: 'Página Pública', icon: <Package className="h-4 w-4" /> },
   ];
 
   const authenticatedNavLinks = [
     { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
+    { href: '/empresas', label: 'Empresas', icon: <Building2 className="h-4 w-4" /> },
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
   ];
 
