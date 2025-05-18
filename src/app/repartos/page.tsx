@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { HeroRepartos } from '@/components/repartos/HeroRepartos';
+import { ListarRepartos } from '@/components/repartos/ListarRepartos'; // Import the new component
 
 export const dynamic = 'force-dynamic';
 
@@ -37,10 +38,7 @@ export default async function RepartosPage() {
   return (
     <div className="space-y-6">
       <HeroRepartos />
-      {/* Placeholder for future content like ListarRepartos component */}
-      <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
-        <p>Próximamente: Listado y gestión de repartos aquí.</p>
-      </div>
+      <ListarRepartos />
     </div>
   );
 }
