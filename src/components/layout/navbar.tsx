@@ -44,18 +44,20 @@ export function Navbar() {
     };
   }, [supabase.auth]);
 
-  const navLinks = [
-    { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> }, // Updated link
+  const commonNavLinks = [
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
-    // Add more links here as needed for shipping management features
-    // e.g. { href: '/envios', label: 'Mis Envíos', icon: <Package className="h-4 w-4" /> }
+  ];
+
+  const authenticatedNavLinks = [
+    { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
+    // Add more authenticated links here as needed
   ];
 
   const commonLinkClasses = "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors";
   const activeLinkClasses = "bg-primary/10 text-primary";
   const inactiveLinkClasses = "text-foreground/70 hover:text-foreground hover:bg-muted";
 
-  const renderNavLinks = (isMobile = false) => navLinks.map(link => (
+  const renderNavLinksList = (links: typeof commonNavLinks | typeof authenticatedNavLinks, isMobile = false) => links.map(link => (
     <Link
       key={link.href}
       href={link.href}
@@ -106,7 +108,6 @@ export function Navbar() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {/* Add other user-specific links here if needed */}
         <DropdownMenuItem asChild>
           <form action={logout} className="w-full">
             <button type="submit" className="flex items-center w-full cursor-pointer">
@@ -130,7 +131,8 @@ export function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden items-center space-x-2 md:flex">
-          {user && renderNavLinks() /* Only show nav links if user is logged in */}
+          {renderNavLinksList(commonNavLinks)}
+          {user && renderNavLinksList(authenticatedNavLinks)}
         </div>
         <div className="hidden items-center space-x-2 md:flex">
           {renderAuthButtons()}
@@ -160,7 +162,8 @@ export function Navbar() {
                   </Button>
                 </div>
                 <nav className="flex-grow p-4 space-y-2">
-                  {user && renderNavLinks(true) /* Only show nav links if user is logged in */}
+                  {renderNavLinksList(commonNavLinks, true)}
+                  {user && renderNavLinksList(authenticatedNavLinks, true)}
                   <div className="border-t border-border my-2"></div>
                   {renderAuthButtons(true)}
                   {renderUserMenu(true)}
