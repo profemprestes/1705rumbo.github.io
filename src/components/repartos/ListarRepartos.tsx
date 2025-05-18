@@ -10,9 +10,20 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle, Edit3, Eye, XCircle, ListFilter, ArrowUpDown, Loader2, Route } from "lucide-react";
 import type { Database, Tables, Enums } from "@/lib/supabase/database.types";
-// import { CargaReparto } from "./CargaReparto"; // Modal for creating/editing - To be implemented
-// import { createSupabaseBrowserClient } from '@/lib/supabase/client';
-// import { useToast } from "@/hooks/use-toast";
+import { CrearRepartos } from "./CrearRepartos"; // Import the new modal component
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 type Reparto = Tables<'repartos'>;
 type Conductor = Tables<'conductores'>;
@@ -22,106 +33,54 @@ type RepartoConDetalles = Reparto & {
   conductores?: { nombre_completo: string } | null;
 };
 
-// Placeholder data for now
-const placeholderRepartos: RepartoConDetalles[] = [
-  {
-    id: '1',
-    codigo_reparto: 1001,
-    fecha_hora_inicio: new Date('2024-05-20T09:00:00Z').toISOString(),
-    fecha_hora_fin_estimada: new Date('2024-05-20T17:00:00Z').toISOString(),
-    fecha_hora_fin_real: null,
-    id_conductor_asignado: 'conductor-1',
-    conductores: { nombre_completo: 'Juan Pérez' },
-    vehiculo_descripcion: 'Ford Transit Patente AB123CD',
-    estado_reparto: 'En Curso',
-    destino_direccion: 'Av. Colón 1234, Mar del Plata',
-    notas: 'Entregar en recepción.',
-    user_id: 'user-id-1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    codigo_reparto: 1002,
-    fecha_hora_inicio: new Date('2024-05-19T14:00:00Z').toISOString(),
-    fecha_hora_fin_estimada: new Date('2024-05-19T18:00:00Z').toISOString(),
-    fecha_hora_fin_real: new Date('2024-05-19T17:30:00Z').toISOString(),
-    id_conductor_asignado: 'conductor-2',
-    conductores: { nombre_completo: 'Ana Gómez' },
-    vehiculo_descripcion: 'Renault Kangoo Patente CD456EF',
-    estado_reparto: 'Completado',
-    destino_direccion: 'San Martín 5678, Mar del Plata',
-    notas: null,
-    user_id: 'user-id-2',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    codigo_reparto: 1003,
-    fecha_hora_inicio: new Date('2024-05-21T10:00:00Z').toISOString(),
-    fecha_hora_fin_estimada: new Date('2024-05-21T15:00:00Z').toISOString(),
-    fecha_hora_fin_real: null,
-    id_conductor_asignado: 'conductor-1',
-    conductores: { nombre_completo: 'Juan Pérez' },
-    vehiculo_descripcion: 'Ford Transit Patente AB123CD',
-    estado_reparto: 'Pendiente',
-    destino_direccion: 'Luro 3210, Mar del Plata',
-    notas: 'Llamar antes de llegar.',
-    user_id: 'user-id-1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
 export function ListarRepartos() {
-  // const supabase = createSupabaseBrowserClient();
-  // const { toast } = useToast();
+  const supabase = createSupabaseBrowserClient();
+  const { toast } = useToast();
 
-  const [repartos, setRepartos] = useState<RepartoConDetalles[]>(placeholderRepartos);
-  const [loading, setLoading] = useState(false); // Set to false as we are using placeholder data
+  const [repartos, setRepartos] = useState<RepartoConDetalles[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [repartoToEdit, setRepartoToEdit] = useState<Reparto | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // const [repartoToEdit, setRepartoToEdit] = useState<Reparto | null>(null); // For future edit functionality
   
-  // const [repartoToCancel, setRepartoToCancel] = useState<Reparto | null>(null);
-  // const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
+  const [repartoToCancel, setRepartoToCancel] = useState<Reparto | null>(null);
+  const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
 
-  // const fetchRepartos = async () => {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     const { data, error: fetchError } = await supabase
-  //       .from('repartos')
-  //       .select('*, conductores(nombre_completo)')
-  //       .order('fecha_hora_inicio', { ascending: false });
+  const fetchRepartos = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('repartos')
+        .select('*, conductores(nombre_completo)')
+        .order('fecha_hora_inicio', { ascending: false });
 
-  //     if (fetchError) throw fetchError;
-  //     setRepartos(data as RepartoConDetalles[] || []);
-  //   } catch (err: any) {
-  //     console.error("Error fetching repartos:", err);
-  //     const errorMessage = err.message || "Error al cargar datos de repartos.";
-  //     setError(errorMessage);
-  //     setRepartos([]);
-  //     toast({ variant: 'destructive', title: 'Error de Carga', description: errorMessage });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      if (fetchError) throw fetchError;
+      setRepartos(data as RepartoConDetalles[] || []);
+    } catch (err: any) {
+      console.error("Error fetching repartos:", err);
+      const errorMessage = err.message || "Error al cargar datos de repartos.";
+      setError(errorMessage);
+      setRepartos([]);
+      toast({ variant: 'destructive', title: 'Error de Carga', description: errorMessage });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // useEffect(() => {
-  //   // fetchRepartos(); // Uncomment when ready to fetch from Supabase
-  // }, []);
+  useEffect(() => {
+    fetchRepartos();
+  }, []);
 
   const getStatusBadgeVariant = (status: EstadoReparto | null): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'Pendiente':
         return 'outline';
       case 'En Curso':
-        return 'default'; // Using 'default' for 'En Curso' which is typically primary color
+        return 'default'; 
       case 'Completado':
-        return 'secondary'; // Using 'secondary' for 'Completado' for a green-like accent
+        return 'secondary'; 
       case 'Cancelado':
         return 'destructive';
       default:
@@ -140,33 +99,46 @@ export function ListarRepartos() {
         minute: '2-digit',
       });
     } catch (e) {
+      console.error("Error formatting date:", dateString, e);
       return 'Fecha inválida';
     }
   };
 
-  // const handleOpenCreateModal = () => {
-  //   setRepartoToEdit(null);
-  //   setIsModalOpen(true);
-  // };
+  const handleOpenCreateModal = () => {
+    // setRepartoToEdit(null); // If CargaReparto handles both create/edit
+    setIsCreateModalOpen(true);
+  };
 
   // const handleOpenEditModal = (reparto: Reparto) => {
   //   setRepartoToEdit(reparto);
-  //   setIsModalOpen(true);
+  //   setIsCreateModalOpen(true); // Assuming CargaReparto handles edit too
   // };
   
-  // const handleCancelClick = (reparto: Reparto) => {
-  //   setRepartoToCancel(reparto);
-  //   setIsCancelAlertOpen(true);
-  // };
+  const handleCancelClick = (reparto: Reparto) => {
+    setRepartoToCancel(reparto);
+    setIsCancelAlertOpen(true);
+  };
 
-  // const confirmCancel = async () => {
-  //   if (!repartoToCancel) return;
-  //   // Logic to update reparto status to 'Cancelado' in Supabase
-  //   toast({ title: 'Reparto Cancelado (Simulado)', description: `El reparto ${repartoToCancel.codigo_reparto} ha sido cancelado.` });
-  //   setIsCancelAlertOpen(false);
-  //   setRepartoToCancel(null);
-  //   // fetchRepartos(); // Refresh list
-  // };
+  const confirmCancel = async () => {
+    if (!repartoToCancel || !repartoToCancel.id) return;
+    try {
+      const { error: updateError } = await supabase
+        .from('repartos')
+        .update({ estado_reparto: 'Cancelado' as EstadoReparto, fecha_hora_fin_real: new Date().toISOString() })
+        .eq('id', repartoToCancel.id);
+
+      if (updateError) throw updateError;
+      
+      toast({ title: 'Reparto Cancelado', description: `El reparto código ${repartoToCancel.codigo_reparto} ha sido cancelado.` });
+      fetchRepartos(); // Refresh list
+    } catch (err: any) {
+        console.error("Error cancelling reparto:", err);
+        toast({ variant: 'destructive', title: 'Error al Cancelar', description: err.message || 'No se pudo cancelar el reparto.' });
+    } finally {
+        setIsCancelAlertOpen(false);
+        setRepartoToCancel(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -185,7 +157,7 @@ export function ListarRepartos() {
         </CardHeader>
         <CardContent>
           <p className="text-destructive-foreground">{error}</p>
-          {/* <Button onClick={fetchRepartos} className="mt-4" variant="secondary">Reintentar</Button> */}
+          <Button onClick={fetchRepartos} className="mt-4" variant="secondary">Reintentar</Button>
         </CardContent>
       </Card>
     );
@@ -203,7 +175,7 @@ export function ListarRepartos() {
               Visualiza y gestiona los repartos programados y en curso.
             </CardDescription>
           </div>
-          <Button /*onClick={handleOpenCreateModal}*/ className="bg-primary hover:bg-primary/90">
+          <Button onClick={handleOpenCreateModal} className="bg-primary hover:bg-primary/90">
             <PlusCircle className="mr-2 h-5 w-5" />
             Cargar Nuevo Reparto
           </Button>
@@ -266,14 +238,14 @@ export function ListarRepartos() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-1 md:space-x-2">
-                        <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Ver ${reparto.codigo_reparto}`}>
+                        <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Ver ${reparto.codigo_reparto}`} disabled>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Modificar ${reparto.codigo_reparto}`} /*onClick={() => handleOpenEditModal(reparto)}*/>
+                        <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Modificar ${reparto.codigo_reparto}`} /*onClick={() => handleOpenEditModal(reparto)}*/ disabled>
                           <Edit3 className="h-4 w-4" />
                         </Button>
                         {reparto.estado_reparto !== 'Completado' && reparto.estado_reparto !== 'Cancelado' && (
-                          <Button variant="outline" size="sm" className="hover:border-destructive hover:text-destructive px-2" aria-label={`Cancelar ${reparto.codigo_reparto}`} /*onClick={() => handleCancelClick(reparto)}*/>
+                          <Button variant="outline" size="sm" className="hover:border-destructive hover:text-destructive px-2" aria-label={`Cancelar ${reparto.codigo_reparto}`} onClick={() => handleCancelClick(reparto)}>
                              <XCircle className="h-4 w-4" />
                           </Button>
                         )}
@@ -287,11 +259,9 @@ export function ListarRepartos() {
         </CardContent>
       </Card>
 
-      {/* 
-      <CargaReparto
-        isOpen={isModalOpen}
-        setIsOpen={setIsModalOpen}
-        repartoToEdit={repartoToEdit}
+      <CrearRepartos
+        isOpen={isCreateModalOpen}
+        setIsOpen={setIsCreateModalOpen}
         onFormSubmit={fetchRepartos}
       />
       
@@ -313,7 +283,6 @@ export function ListarRepartos() {
           </AlertDialogContent>
         </AlertDialog>
       )}
-      */}
     </>
   );
 }
