@@ -50,42 +50,42 @@ export type Database = {
           }
         ]
       }
-      empresas: { // New table for companies
+      empresas: {
         Row: {
-          id: string // UUID
-          codigo_empresa: number // SERIAL, auto-incrementing
+          id: string
+          codigo_empresa: number
           nombre: string
-          industria: string | null
+          industria: string | null // Corresponds to type_industria enum in DB
           email_contacto: string | null
-          estado: string | null // e.g., 'Activo', 'Inactivo'
+          estado: string | null
           direccion: string | null
-          user_id: string | null // UUID, references auth.users.id
-          created_at: string // TIMESTAMPTZ
-          updated_at: string // TIMESTAMPTZ
+          user_id: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          id?: string // Default is gen_random_uuid()
-          codigo_empresa?: never // SERIAL, handled by database
+          id?: string
+          codigo_empresa?: never
           nombre: string
           industria?: string | null
           email_contacto?: string | null
-          estado?: string | null // Default is 'Activo'
+          estado?: string | null
           direccion?: string | null
-          user_id: string // Associated user
-          created_at?: string // Default is NOW()
-          updated_at?: string // Default is NOW()
+          user_id: string
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
-          codigo_empresa?: never // Should not be updated directly
+          codigo_empresa?: never
           nombre?: string
           industria?: string | null
           email_contacto?: string | null
           estado?: string | null
           direccion?: string | null
-          user_id?: string // Typically not changed after creation
+          user_id?: string
           created_at?: string
-          updated_at?: string // Handled by trigger
+          updated_at?: string
         }
         Relationships: [
           {
@@ -97,24 +97,83 @@ export type Database = {
           }
         ]
       }
+      clientes: { // New table for clients
+        Row: {
+          id: string // UUID
+          codigo_cliente: number // SERIAL, auto-incrementing
+          nombre_completo: string
+          email: string | null
+          telefono: string | null
+          direccion: string | null
+          id_empresa_asociada: string | null // UUID, FK to empresas.id
+          estado: string | null // e.g., 'Activo', 'Inactivo'
+          user_id: string | null // UUID, references auth.users.id
+          created_at: string // TIMESTAMPTZ
+          updated_at: string // TIMESTAMPTZ
+        }
+        Insert: {
+          id?: string // Default is gen_random_uuid()
+          codigo_cliente?: never // SERIAL, handled by database
+          nombre_completo: string
+          email?: string | null
+          telefono?: string | null
+          direccion?: string | null
+          id_empresa_asociada?: string | null
+          estado?: string | null // Default is 'Activo'
+          user_id: string // Associated user
+          created_at?: string // Default is NOW()
+          updated_at?: string // Default is NOW()
+        }
+        Update: {
+          id?: string
+          codigo_cliente?: never
+          nombre_completo?: string
+          email?: string | null
+          telefono?: string | null
+          direccion?: string | null
+          id_empresa_asociada?: string | null
+          estado?: string | null
+          user_id?: string
+          created_at?: string
+          updated_at?: string // Handled by trigger
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_id_empresa_asociada_fkey"
+            columns: ["id_empresa_asociada"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       // Add your view definitions here
     }
     Functions: {
-      // Add your function definitions here
-      // Example of how handle_profile_updated_at might be typed if directly callable via RPC
-      // (though it's a trigger function, so not typically called directly):
+      handle_empresa_updated_at: {
+        Args: {}
+        Returns: unknown
+      }
+      handle_cliente_updated_at: { // Function for clientes table
+        Args: {}
+        Returns: unknown
+      }
       // handle_profile_updated_at: {
       //   Args: {}
       //   Returns: unknown // Actually returns a trigger type
       // }
-      handle_empresa_updated_at: { // Function for empresas table
-        Args: {}
-        Returns: unknown 
-      }
     }
     Enums: {
+      type_industria: "delivery" | "viandas" | "mensajeria" | "flex"
       // Add your enum definitions here
     }
     CompositeTypes: {

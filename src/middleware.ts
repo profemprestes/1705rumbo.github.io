@@ -17,19 +17,28 @@ export async function middleware(request: NextRequest) {
     '/login',
     '/signup',
     '/auth/auth-code-error',
-    '/', // Make the root public for landing/welcome
+    // '/', // Root is now protected
   ];
 
+  // Paths that are public IF a user is NOT logged in, but should redirect if logged in.
+  const authFlowPaths = ['/login', '/signup'];
+
   const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback');
+  const isAuthFlowPath = authFlowPaths.includes(pathname);
 
 
-  // if user is signed in and the current path is /login or /signup, redirect to /inicio
-  if (session && (pathname === '/login' || pathname === '/signup')) {
+  // if user is signed in and on an auth flow path (login/signup), redirect to /inicio
+  if (session && isAuthFlowPath) {
     return NextResponse.redirect(new URL('/inicio', request.url));
   }
 
   // if user is not signed in and the current path is not a public one, redirect to /login
   if (!session && !isPublicPath) {
+    // Special case for root: if not logged in, go to login. If logged in, page.tsx handles /inicio redirect.
+    if (pathname === '/') {
+        return NextResponse.redirect(new URL('/login', request.url));
+    }
+    // For other protected paths
     return NextResponse.redirect(new URL('/login', request.url));
   }
   

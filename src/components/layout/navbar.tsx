@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2 } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2, Users } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -45,13 +45,12 @@ export function Navbar() {
     };
   }, [supabase.auth]);
 
-  const commonNavLinks: { href: string; label: string; icon: JSX.Element }[] = [
-    // Example: { href: '/public-page', label: 'Página Pública', icon: <Package className="h-4 w-4" /> },
-  ];
+  const commonNavLinks: { href: string; label: string; icon: JSX.Element }[] = [];
 
   const authenticatedNavLinks = [
     { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
     { href: '/empresas', label: 'Empresas', icon: <Building2 className="h-4 w-4" /> },
+    { href: '/clientes', label: 'Clientes', icon: <Users className="h-4 w-4" /> },
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
   ];
 
@@ -152,7 +151,7 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] p-0">
               <SheetTitle className="sr-only">Menú de Navegación</SheetTitle> 
-              <div className="flex h-full flex-col">
+              <nav className="flex h-full flex-col" suppressHydrationWarning>
                 <div className="flex items-center justify-between border-b p-4">
                   <Link href={user ? "/inicio" : "/"} className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                     <Package className="h-7 w-7 text-primary" />
@@ -163,7 +162,7 @@ export function Navbar() {
                     <span className="sr-only">Cerrar menú</span>
                   </Button>
                 </div>
-                <nav className="flex-grow p-4 space-y-2" suppressHydrationWarning>
+                <div className="flex-grow p-4 space-y-2">
                   {renderNavLinksList(commonNavLinks, true)}
                   {!loading && user && renderNavLinksList(authenticatedNavLinks, true)}
                   
@@ -172,8 +171,8 @@ export function Navbar() {
 
                   {!loading && !user && renderAuthButtons(true)}
                   {!loading && user && renderUserMenu(true)}
-                </nav>
-              </div>
+                </div>
+              </nav>
             </SheetContent>
           </Sheet>
         </div>
