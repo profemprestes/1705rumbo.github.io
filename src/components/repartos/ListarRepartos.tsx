@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Edit3, Eye, XCircle, ListFilter, ArrowUpDown, Loader2, Route } from "lucide-react";
+import { PlusCircle, Edit3, Eye, XCircle, ListFilter, ArrowUpDown, Loader2, Route, PackagePlus } from "lucide-react";
 import type { Database, Tables, Enums } from "@/lib/supabase/database.types";
-import { CrearRepartos } from "./CrearRepartos"; // Import the new modal component
+import { CrearRepartos } from "./CrearRepartos";
+import { AsignarRepartosLote } from "./AsignarRepartosLote"; // Import new component
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -42,6 +43,7 @@ export function ListarRepartos() {
   const [error, setError] = useState<string | null>(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAssignBatchModalOpen, setIsAssignBatchModalOpen] = useState(false); // State for batch assign modal
   // const [repartoToEdit, setRepartoToEdit] = useState<Reparto | null>(null); // For future edit functionality
   
   const [repartoToCancel, setRepartoToCancel] = useState<Reparto | null>(null);
@@ -105,14 +107,12 @@ export function ListarRepartos() {
   };
 
   const handleOpenCreateModal = () => {
-    // setRepartoToEdit(null); // If CargaReparto handles both create/edit
     setIsCreateModalOpen(true);
   };
 
-  // const handleOpenEditModal = (reparto: Reparto) => {
-  //   setRepartoToEdit(reparto);
-  //   setIsCreateModalOpen(true); // Assuming CargaReparto handles edit too
-  // };
+  const handleOpenAssignBatchModal = () => {
+    setIsAssignBatchModalOpen(true);
+  };
   
   const handleCancelClick = (reparto: Reparto) => {
     setRepartoToCancel(reparto);
@@ -175,10 +175,16 @@ export function ListarRepartos() {
               Visualiza y gestiona los repartos programados y en curso.
             </CardDescription>
           </div>
-          <Button onClick={handleOpenCreateModal} className="bg-primary hover:bg-primary/90">
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Cargar Nuevo Reparto
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <Button onClick={handleOpenCreateModal} className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Cargar Nuevo Reparto
+            </Button>
+            <Button onClick={handleOpenAssignBatchModal} variant="outline" className="w-full sm:w-auto">
+              <PackagePlus className="mr-2 h-5 w-5" />
+              Asignar en Lote
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-col sm:flex-row gap-2 items-center">
@@ -264,6 +270,12 @@ export function ListarRepartos() {
         setIsOpen={setIsCreateModalOpen}
         onFormSubmit={fetchRepartos}
       />
+
+      <AsignarRepartosLote
+        isOpen={isAssignBatchModalOpen}
+        setIsOpen={setIsAssignBatchModalOpen}
+        onFormSubmit={fetchRepartos}
+      />
       
       {repartoToCancel && (
         <AlertDialog open={isCancelAlertOpen} onOpenChange={setIsCancelAlertOpen}>
@@ -286,3 +298,5 @@ export function ListarRepartos() {
     </>
   );
 }
+
+    
