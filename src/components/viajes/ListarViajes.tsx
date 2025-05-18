@@ -12,7 +12,7 @@ import { Eye, ListFilter, Loader2, Route, ArrowUpDown, CalendarDays, Users, Truc
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Database, Tables, Enums } from "@/lib/supabase/database.types";
 import { useToast } from "@/hooks/use-toast";
-import { DetalleViaje } from "./DetalleViaje"; // Import the new component
+import { DetalleViaje } from "./DetalleViaje"; 
 
 type Viaje = Tables<'viajes'>;
 type Conductor = Tables<'conductores'>;
@@ -20,10 +20,10 @@ type Empresa = Tables<'empresas'>;
 type EstadoViaje = Enums<'estado_viaje'>;
 
 type ViajeConDetalles = Viaje & {
-  conductores: Pick<Conductor, 'nombre_completo' | 'codigo_conductor'> & {
+  conductores: (Pick<Conductor, 'nombre_completo' | 'codigo_conductor'> & {
     empresas: Pick<Empresa, 'nombre'> | null;
-  } | null;
-  repartos: [{ count: number }]; 
+  }) | null;
+  repartos: { count: number }[]; // Array of count objects, could be empty
 };
 
 export function ListarViajes() {
@@ -43,17 +43,7 @@ export function ListarViajes() {
     try {
       const { data, error: fetchError } = await supabase
         .from('viajes')
-        .select(`
-          *,
-          conductores (
-            nombre_completo,
-            codigo_conductor,
-            empresas (
-              nombre
-            )
-          ),
-          repartos (count)
-        `)
+        .select('*, conductores(nombre_completo, codigo_conductor, empresas(nombre)), repartos(count)')
         .order('fecha_hora_inicio_planificado', { ascending: false });
 
       if (fetchError) {
@@ -73,6 +63,7 @@ export function ListarViajes() {
 
   useEffect(() => {
     fetchViajes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getStatusBadgeVariant = (status: EstadoViaje | null): "default" | "secondary" | "destructive" | "outline" => {
@@ -209,7 +200,10 @@ export function ListarViajes() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        {viaje.repartos && viaje.repartos.length > 0 ? viaje.repartos[0].count : 0}
+                        {/* Safely access count: check if repartos array exists, has elements, and the first element has a count */}
+                        {(viaje.repartos && viaje.repartos.length > 0 && typeof viaje.repartos[0].count === 'number')
+                          ? viaje.repartos[0].count
+                          : 0}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button 
@@ -238,3 +232,4 @@ export function ListarViajes() {
     </>
   );
 }
+
