@@ -4,9 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ListarEmpresas } from "@/components/empresas/ListarEmpresas";
 import { HeroEmpresas } from '@/components/empresas/HeroEmpresas';
-// Removed Button and Link as they are not used in the simplified error case
-// import { Button } from '@/components/ui/button';
-// import Link from 'next/link';
+import { Card } from '@/components/ui/card'; // Diagnostic import
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +23,6 @@ export default async function EmpresasPage() {
     }
   } catch (error) {
     console.error("Error fetching user in EmpresasPage:", error);
-    // Return a very simple text response for debugging
     return new Response("Error del Servidor: No se pudo verificar la autenticación del usuario. Por favor, inténtalo de nuevo más tarde.", {
       status: 500,
       headers: { 'Content-Type': 'text/plain' },

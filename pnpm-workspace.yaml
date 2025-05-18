@@ -1,3 +1,4 @@
+
 ignoredBuiltDependencies:
   - esbuild
   - protobufjs
@@ -5,5 +6,4 @@ ignoredBuiltDependencies:
 onlyBuiltDependencies:
   - '@firebase/util'
 overrides:
-  next@=15.2.3: '>=15.2.4'
   cookie@<0.7.0: '>=0.7.0'
