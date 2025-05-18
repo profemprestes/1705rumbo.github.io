@@ -14,52 +14,48 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// import { Textarea } from "@/components/ui/textarea"; // Replaced by AddressAutocomplete
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/lib/supabase/database.types';
-import { AddressAutocomplete } from '@/components/common/AddressAutocomplete'; // Import the new component
+import { AddressAutocomplete } from '@/components/common/AddressAutocomplete';
 
 type Empresa = Tables<'empresas'>;
 
-interface CargaEmpresaProps {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
-  empresaToEdit?: Empresa | null;
-  onFormSubmit: () => void; // Callback to refresh list
-}
-
 const ESTADOS_EMPRESA = ['Activo', 'Inactivo', 'Pendiente'] as const;
 type EstadoEmpresa = typeof ESTADOS_EMPRESA[number];
+
+// Define industry types based on the Supabase enum
+const INDUSTRIAS = ['delivery', 'viandas', 'mensajeria', 'flex'] as const;
+type IndustriaType = typeof INDUSTRIAS[number];
 
 export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }: CargaEmpresaProps) {
   const supabase = createSupabaseBrowserClient();
   const { toast } = useToast();
 
   const [nombre, setNombre] = useState('');
-  const [industria, setIndustria] = useState('');
+  const [industria, setIndustria] = useState<IndustriaType | ''>(''); // Updated type
   const [emailContacto, setEmailContacto] = useState('');
-  const [direccion, setDireccion] = useState(''); // This will be controlled by AddressAutocomplete
+  const [direccion, setDireccion] = useState('');
   const [estado, setEstado] = useState<EstadoEmpresa>('Activo');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (empresaToEdit) {
       setNombre(empresaToEdit.nombre || '');
-      setIndustria(empresaToEdit.industria || '');
+      setIndustria((empresaToEdit.industria as IndustriaType) || ''); // Ensure correct type and fallback
       setEmailContacto(empresaToEdit.email_contacto || '');
       setDireccion(empresaToEdit.direccion || '');
       setEstado((empresaToEdit.estado as EstadoEmpresa) || 'Activo');
     } else {
       // Reset form for new entry
       setNombre('');
-      setIndustria('');
+      setIndustria(''); // Reset to empty string
       setEmailContacto('');
       setDireccion('');
       setEstado('Activo');
     }
-  }, [empresaToEdit, isOpen]); // Re-run if empresaToEdit changes or modal opens
+  }, [empresaToEdit, isOpen]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -72,7 +68,7 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
     }
     
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user && !empresaToEdit) { // user is needed for new entries
+    if (!user && !empresaToEdit) {
         toast({ variant: 'destructive', title: 'Error', description: 'Debes estar autenticado para crear una empresa.' });
         setIsLoading(false);
         return;
@@ -80,15 +76,14 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
 
     const empresaData = {
       nombre,
-      industria: industria || null,
+      industria: industria || null, // Send null if industria is empty, allowing DB default
       email_contacto: emailContacto || null,
-      direccion: direccion || null, // Direccion comes from state updated by AddressAutocomplete
+      direccion: direccion || null,
       estado,
     };
 
     try {
       if (empresaToEdit && empresaToEdit.id) {
-        // Update existing empresa
         const { error } = await supabase
           .from('empresas')
           .update(empresaData as TablesUpdate<'empresas'>)
@@ -97,7 +92,6 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
         if (error) throw error;
         toast({ title: 'Empresa Actualizada', description: 'La información de la empresa ha sido actualizada.' });
       } else {
-        // Create new empresa
         if (!user?.id) {
             toast({ variant: 'destructive', title: 'Error', description: 'No se pudo obtener el ID del usuario.' });
             setIsLoading(false);
@@ -110,8 +104,8 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
         if (error) throw error;
         toast({ title: 'Empresa Creada', description: 'La nueva empresa ha sido registrada.' });
       }
-      onFormSubmit(); // Refresh the list
-      setIsOpen(false); // Close modal
+      onFormSubmit();
+      setIsOpen(false);
     } catch (error: any) {
       console.error('Error guardando empresa:', error);
       toast({
@@ -160,13 +154,16 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
               <Label htmlFor="industria" className="text-right col-span-1">
                 Industria
               </Label>
-              <Input
-                id="industria"
-                value={industria}
-                onChange={(e) => setIndustria(e.target.value)}
-                className="col-span-3"
-                placeholder="Ej: Software, Transporte, Alimentos"
-              />
+              <Select value={industria} onValueChange={(value: IndustriaType | '') => setIndustria(value)}>
+                <SelectTrigger id="industria" className="col-span-3">
+                  <SelectValue placeholder="Seleccionar industria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INDUSTRIAS.map(s => (
+                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="emailContacto" className="text-right col-span-1">
@@ -182,7 +179,6 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
               />
             </div>
             
-            {/* Replace Textarea with AddressAutocomplete */}
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="direccion-autocomplete" className="text-right col-span-1 pt-2">
                 Dirección
@@ -190,7 +186,7 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
               <div className="col-span-3">
                 <AddressAutocomplete
                   id="direccion-autocomplete"
-                  label="" // Label is provided by the grid
+                  label=""
                   initialValue={direccion}
                   onAddressSelected={handleAddressSelected}
                   placeholder="Buscar dirección en Mar del Plata..."
