@@ -4,13 +4,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { HeroRepartos } from '@/components/repartos/HeroRepartos';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-// Suggested code may be subject to a license. Learn more: ~LicenseLog:4196384852.
-  title: 'Gestión de Repartos | Empresas',
-  description: 'Administra la información de repartos registradas en RumboEnvios.',
+  title: 'Gestión de Repartos',
+  description: 'Administra la información de repartos registrados en RumboEnvios.',
 };
 
 export default async function RepartosPage() {
@@ -22,7 +22,7 @@ export default async function RepartosPage() {
       redirect('/login');
     }
   } catch (error) {
-    console.error("Error fetching user in EmpresasPage:", error);
+    console.error("Error fetching user in RepartosPage:", error);
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
             <h1 className="text-2xl font-bold text-destructive mb-4">Error del Servidor</h1>
@@ -36,7 +36,11 @@ export default async function RepartosPage() {
 
   return (
     <div className="space-y-6">
-
+      <HeroRepartos />
+      {/* Placeholder for future content like ListarRepartos component */}
+      <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
+        <p>Próximamente: Listado y gestión de repartos aquí.</p>
+      </div>
     </div>
   );
 }

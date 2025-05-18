@@ -13,19 +13,12 @@ export async function middleware(request: NextRequest) {
     session = data.session;
   } catch (error) {
     console.error('Error in middleware during Supabase operation:', error);
-    // Allow request to proceed, user will be treated as unauthenticated
-    // if session could not be retrieved.
-    // Re-initialize response because the original one might have been modified by createSupabaseMiddlewareClient before throwing
-    response = NextResponse.next(); 
-    // It's important to ensure request headers are also passed along if `NextResponse.next(request)` was intended.
-    // For simplicity, we'll just forward a basic next response.
-    // If you have specific request headers to preserve, you'd do:
-    // const newHeaders = new Headers(request.headers)
-    // response = NextResponse.next({ request: { headers: newHeaders }})
+    response = NextResponse.next();
   }
 
   const { pathname } = request.nextUrl;
 
+  // Public paths accessible to everyone
   const publicPaths = [
     '/login',
     '/signup',
@@ -33,19 +26,22 @@ export async function middleware(request: NextRequest) {
     '/', // Root is public for welcome
   ];
 
+  // Paths for authentication flow (users already logged in should be redirected away from these)
   const authFlowPaths = ['/login', '/signup'];
 
   const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback');
   const isAuthFlowPath = authFlowPaths.includes(pathname);
 
+  // If the user is logged in and tries to access login/signup, redirect to /inicio
   if (session && isAuthFlowPath) {
     return NextResponse.redirect(new URL('/inicio', request.url));
   }
 
+  // If the user is not logged in and tries to access a non-public path, redirect to /login
   if (!session && !isPublicPath) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
-  
+
   return response;
 }
 

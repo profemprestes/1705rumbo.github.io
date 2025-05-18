@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2, Users, Truck } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2, Users, Truck, MapPinned } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -31,13 +31,13 @@ export function Navbar() {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      setLoading(false); 
+      setLoading(false);
     }
     getUser();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      setLoading(false); 
+      setLoading(false);
     });
 
     return () => {
@@ -52,6 +52,7 @@ export function Navbar() {
     { href: '/empresas', label: 'Empresas', icon: <Building2 className="h-4 w-4" /> },
     { href: '/clientes', label: 'Clientes', icon: <Users className="h-4 w-4" /> },
     { href: '/conductores', label: 'Conductores', icon: <Truck className="h-4 w-4" /> },
+    { href: '/repartos', label: 'Repartos', icon: <MapPinned className="h-4 w-4" /> },
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
   ];
 
@@ -70,7 +71,7 @@ export function Navbar() {
       {link.label}
     </Link>
   ));
-  
+
   const renderAuthButtons = (isMobile = false) => (
     <>
       <Button asChild variant="ghost" className={`${isMobile ? 'w-full justify-start text-foreground/70 hover:text-foreground' : 'text-sm'}`}>
@@ -151,7 +152,7 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] p-0">
-              <SheetTitle className="sr-only">Menú de Navegación</SheetTitle> 
+              <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
               <nav className="flex h-full flex-col" suppressHydrationWarning>
                 <div className="flex items-center justify-between border-b p-4">
                   <Link href={user ? "/inicio" : "/"} className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
@@ -166,7 +167,7 @@ export function Navbar() {
                 <div className="flex-grow p-4 space-y-2">
                   {renderNavLinksList(commonNavLinks, true)}
                   {!loading && user && renderNavLinksList(authenticatedNavLinks, true)}
-                  
+
                   {(!loading && !user && (commonNavLinks.length > 0 || authenticatedNavLinks.length > 0)) && <div className="border-t border-border my-2"></div>}
                   {(user && authenticatedNavLinks.length > 0 && commonNavLinks.length > 0) && <div className="border-t border-border my-2"></div>}
 
