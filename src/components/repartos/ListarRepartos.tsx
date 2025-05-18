@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusCircle, Edit3, Eye, XCircle, ListFilter, ArrowUpDown, Loader2, Route, PackagePlus } from "lucide-react";
 import type { Database, Tables, Enums } from "@/lib/supabase/database.types";
 import { CrearRepartos } from "./CrearRepartos";
-import { AsignarRepartosLote } from "./AsignarRepartosLote"; // Import new component
+import { AsignarRepartosLote } from "./AsignarRepartosLote";
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -28,10 +28,12 @@ import {
 
 type Reparto = Tables<'repartos'>;
 type Conductor = Tables<'conductores'>;
+type Viaje = Tables<'viajes'>; // Add Viaje type
 type EstadoReparto = Enums<'estado_reparto'>;
 
 type RepartoConDetalles = Reparto & {
   conductores?: { nombre_completo: string } | null;
+  viajes?: { codigo_viaje: number } | null; // Add viajes relation
 };
 
 export function ListarRepartos() {
@@ -43,8 +45,7 @@ export function ListarRepartos() {
   const [error, setError] = useState<string | null>(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isAssignBatchModalOpen, setIsAssignBatchModalOpen] = useState(false); // State for batch assign modal
-  // const [repartoToEdit, setRepartoToEdit] = useState<Reparto | null>(null); // For future edit functionality
+  const [isAssignBatchModalOpen, setIsAssignBatchModalOpen] = useState(false);
   
   const [repartoToCancel, setRepartoToCancel] = useState<Reparto | null>(null);
   const [isCancelAlertOpen, setIsCancelAlertOpen] = useState(false);
@@ -55,7 +56,7 @@ export function ListarRepartos() {
     try {
       const { data, error: fetchError } = await supabase
         .from('repartos')
-        .select('*, conductores(nombre_completo)')
+        .select('*, conductores(nombre_completo), viajes(codigo_viaje)') // Updated select
         .order('fecha_hora_inicio', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -130,7 +131,7 @@ export function ListarRepartos() {
       if (updateError) throw updateError;
       
       toast({ title: 'Reparto Cancelado', description: `El reparto código ${repartoToCancel.codigo_reparto} ha sido cancelado.` });
-      fetchRepartos(); // Refresh list
+      fetchRepartos(); 
     } catch (err: any) {
         console.error("Error cancelling reparto:", err);
         toast({ variant: 'destructive', title: 'Error al Cancelar', description: err.message || 'No se pudo cancelar el reparto.' });
@@ -216,7 +217,8 @@ export function ListarRepartos() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px] whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Código</Button></TableHead>
+                    <TableHead className="w-[80px] whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Cód. Reparto</Button></TableHead>
+                    <TableHead className="whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Cód. Viaje</Button></TableHead>
                     <TableHead className="whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Inicio</Button></TableHead>
                     <TableHead className="whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Fin Estimado</Button></TableHead>
                     <TableHead className="whitespace-nowrap">Conductor</TableHead>
@@ -230,6 +232,7 @@ export function ListarRepartos() {
                   {repartos.map((reparto) => (
                     <TableRow key={reparto.id} className="hover:bg-muted/50">
                       <TableCell className="font-mono">{String(reparto.codigo_reparto).padStart(4, '0')}</TableCell>
+                      <TableCell className="font-mono">{reparto.viajes ? String(reparto.viajes.codigo_viaje).padStart(4, '0') : '-'}</TableCell>
                       <TableCell>{formatDate(reparto.fecha_hora_inicio)}</TableCell>
                       <TableCell>{formatDate(reparto.fecha_hora_fin_estimada)}</TableCell>
                       <TableCell>{reparto.conductores?.nombre_completo || 'No asignado'}</TableCell>
@@ -247,7 +250,7 @@ export function ListarRepartos() {
                         <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Ver ${reparto.codigo_reparto}`} disabled>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Modificar ${reparto.codigo_reparto}`} /*onClick={() => handleOpenEditModal(reparto)}*/ disabled>
+                        <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Modificar ${reparto.codigo_reparto}`} disabled>
                           <Edit3 className="h-4 w-4" />
                         </Button>
                         {reparto.estado_reparto !== 'Completado' && reparto.estado_reparto !== 'Cancelado' && (
@@ -298,5 +301,4 @@ export function ListarRepartos() {
     </>
   );
 }
-
     

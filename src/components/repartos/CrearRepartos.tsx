@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker"; // Ensure this path is correct
+import { DatePicker } from "@/components/ui/date-picker";
 import { AddressAutocomplete } from '@/components/common/AddressAutocomplete';
 import { useToast } from '@/hooks/use-toast';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -25,6 +25,7 @@ import { Loader2, CalendarClock, User, TruckIcon, MapPin, FileText } from 'lucid
 
 type Conductor = Tables<'conductores'>;
 type EstadoReparto = Enums<'estado_reparto'>;
+type EstadoViaje = Enums<'estado_viaje'>;
 
 interface CrearRepartosProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ export function CrearRepartos({ isOpen, setIsOpen, onFormSubmit }: CrearRepartos
       const { data, error } = await supabase
         .from('conductores')
         .select('id, nombre_completo, codigo_conductor')
-        .eq('estado', 'Activo') // Fetch only active drivers
+        .eq('estado', 'Activo') 
         .order('nombre_completo');
       
       if (error) {
@@ -104,23 +105,47 @@ export function CrearRepartos({ isOpen, setIsOpen, onFormSubmit }: CrearRepartos
       combinedFechaHoraFinEstimada = `${fechaFinEstimada.toISOString().split('T')[0]}T${horaFinEstimada}:00Z`;
     }
 
-
-    const repartoData: TablesInsert<'repartos'> = {
-      fecha_hora_inicio: combinedFechaHoraInicio,
-      fecha_hora_fin_estimada: combinedFechaHoraFinEstimada,
-      id_conductor_asignado: idConductorAsignado,
-      vehiculo_descripcion: vehiculoDescripcion,
-      destino_direccion: destinoDireccion,
-      notas: notas || null,
-      estado_reparto: 'Pendiente' as EstadoReparto, // Default state for new repartos
-      user_id: user.id,
-    };
-
     try {
-      const { error } = await supabase.from('repartos').insert([repartoData]);
-      if (error) throw error;
-      toast({ title: 'Reparto Creado', description: 'El nuevo reparto ha sido registrado exitosamente.' });
-      onFormSubmit(); // Refresh the list in the parent component
+      // 1. Create a Viaje record for this single reparto
+      const viajeToInsert: TablesInsert<'viajes'> = {
+        id_conductor_asignado: idConductorAsignado,
+        vehiculo_descripcion: vehiculoDescripcion,
+        fecha_hora_inicio_planificado: combinedFechaHoraInicio,
+        fecha_hora_fin_estimada_planificado: combinedFechaHoraFinEstimada,
+        estado_viaje: 'Planificado' as EstadoViaje,
+        notas_viaje: notas || null, // Use reparto notes for viaje notes in single creation
+        user_id: user.id,
+      };
+
+      const { data: viajeData, error: viajeError } = await supabase
+        .from('viajes')
+        .insert(viajeToInsert)
+        .select()
+        .single();
+
+      if (viajeError) throw viajeError;
+      if (!viajeData) throw new Error("No se pudo crear el viaje para el reparto.");
+      
+      const nuevoViajeId = viajeData.id;
+
+      // 2. Create the Reparto record linked to the new Viaje
+      const repartoData: TablesInsert<'repartos'> = {
+        id_viaje: nuevoViajeId,
+        fecha_hora_inicio: combinedFechaHoraInicio,
+        fecha_hora_fin_estimada: combinedFechaHoraFinEstimada,
+        id_conductor_asignado: idConductorAsignado,
+        vehiculo_descripcion: vehiculoDescripcion,
+        destino_direccion: destinoDireccion,
+        notas: notas || null,
+        estado_reparto: 'Pendiente' as EstadoReparto,
+        user_id: user.id,
+      };
+
+      const { error: repartoError } = await supabase.from('repartos').insert([repartoData]);
+      if (repartoError) throw repartoError;
+
+      toast({ title: 'Reparto Creado', description: `El nuevo reparto ha sido registrado y asignado al viaje #${viajeData.codigo_viaje}.` });
+      onFormSubmit();
       resetForm();
       setIsOpen(false);
     } catch (error: any) {
@@ -146,10 +171,10 @@ export function CrearRepartos({ isOpen, setIsOpen, onFormSubmit }: CrearRepartos
         <DialogHeader>
           <DialogTitle className="text-2xl text-primary flex items-center">
             <TruckIcon className="mr-2 h-6 w-6" />
-            Cargar Nuevo Reparto
+            Cargar Nuevo Reparto (y Viaje asociado)
           </DialogTitle>
           <DialogDescription>
-            Completa la información para registrar un nuevo reparto.
+            Completa la información para registrar un nuevo reparto. Se creará un viaje asociado.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

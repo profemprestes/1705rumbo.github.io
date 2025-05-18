@@ -28,6 +28,7 @@ type Empresa = Tables<'empresas'>;
 type Cliente = Tables<'clientes'>;
 type Conductor = Tables<'conductores'>;
 type EstadoReparto = Enums<'estado_reparto'>;
+type EstadoViaje = Enums<'estado_viaje'>;
 
 interface AsignarRepartosLoteProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
   const [fechaFinEstimada, setFechaFinEstimada] = useState<Date | undefined>();
   const [horaFinEstimada, setHoraFinEstimada] = useState<string>('');
   const [vehiculoDescripcion, setVehiculoDescripcion] = useState('');
-  const [notas, setNotas] = useState('');
+  const [notasViaje, setNotasViaje] = useState(''); // Renamed for clarity, these are common notes for the viaje
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,7 +71,7 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
     setFechaFinEstimada(undefined);
     setHoraFinEstimada('');
     setVehiculoDescripcion('');
-    setNotas('');
+    setNotasViaje('');
   }, []);
 
   useEffect(() => {
@@ -173,41 +174,67 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
       return;
     }
 
-    const combinedFechaHoraInicio = `${fechaInicio.toISOString().split('T')[0]}T${horaInicio}:00Z`;
-    let combinedFechaHoraFinEstimada = null;
+    const combinedFechaHoraInicioPlanificado = `${fechaInicio.toISOString().split('T')[0]}T${horaInicio}:00Z`;
+    let combinedFechaHoraFinEstimadaPlanificado = null;
     if (fechaFinEstimada && horaFinEstimada) {
-      combinedFechaHoraFinEstimada = `${fechaFinEstimada.toISOString().split('T')[0]}T${horaFinEstimada}:00Z`;
-    }
-
-    const repartosToInsert: TablesInsert<'repartos'>[] = [];
-    for (const clienteId of selectedClienteIds) {
-      const cliente = clientesEmpresa.find(c => c.id === clienteId);
-      if (!cliente || !cliente.direccion) {
-        toast({ variant: 'warning', title: 'Cliente sin Dirección', description: `El cliente ${cliente?.nombre_completo || clienteId} no tiene una dirección asignada y será omitido.` });
-        continue;
-      }
-      repartosToInsert.push({
-        fecha_hora_inicio: combinedFechaHoraInicio,
-        fecha_hora_fin_estimada: combinedFechaHoraFinEstimada,
-        id_conductor_asignado: selectedConductorId,
-        vehiculo_descripcion: vehiculoDescripcion,
-        destino_direccion: cliente.direccion,
-        notas: notas || null,
-        estado_reparto: 'Pendiente' as EstadoReparto,
-        user_id: user.id,
-      });
-    }
-
-    if (repartosToInsert.length === 0) {
-      toast({ variant: 'info', title: 'No hay Repartos para Crear', description: 'Ninguno de los clientes seleccionados tenía una dirección válida.' });
-      setIsSubmitting(false);
-      return;
+      combinedFechaHoraFinEstimadaPlanificado = `${fechaFinEstimada.toISOString().split('T')[0]}T${horaFinEstimada}:00Z`;
     }
 
     try {
-      const { error } = await supabase.from('repartos').insert(repartosToInsert);
-      if (error) throw error;
-      toast({ title: 'Repartos Asignados', description: `${repartosToInsert.length} reparto(s) creado(s) exitosamente.` });
+      // 1. Create Viaje record
+      const viajeToInsert: TablesInsert<'viajes'> = {
+        id_conductor_asignado: selectedConductorId,
+        vehiculo_descripcion: vehiculoDescripcion,
+        fecha_hora_inicio_planificado: combinedFechaHoraInicioPlanificado,
+        fecha_hora_fin_estimada_planificado: combinedFechaHoraFinEstimadaPlanificado,
+        estado_viaje: 'Planificado' as EstadoViaje,
+        notas_viaje: notasViaje || null,
+        user_id: user.id,
+      };
+
+      const { data: viajeData, error: viajeError } = await supabase
+        .from('viajes')
+        .insert(viajeToInsert)
+        .select()
+        .single();
+
+      if (viajeError) throw viajeError;
+      if (!viajeData) throw new Error("No se pudo crear el viaje.");
+
+      const nuevoViajeId = viajeData.id;
+
+      // 2. Create Reparto records for each selected client, linked to the viaje
+      const repartosToInsert: TablesInsert<'repartos'>[] = [];
+      for (const clienteId of selectedClienteIds) {
+        const cliente = clientesEmpresa.find(c => c.id === clienteId);
+        if (!cliente || !cliente.direccion) {
+          toast({ variant: 'warning', title: 'Cliente sin Dirección', description: `El cliente ${cliente?.nombre_completo || clienteId} no tiene una dirección asignada y será omitido.` });
+          continue;
+        }
+        repartosToInsert.push({
+          id_viaje: nuevoViajeId,
+          fecha_hora_inicio: combinedFechaHoraInicioPlanificado, // Using viaje's planned start for individual repartos
+          fecha_hora_fin_estimada: combinedFechaHoraFinEstimadaPlanificado, // Using viaje's planned end
+          id_conductor_asignado: selectedConductorId, // Redundant if viaje has it, but good for direct query on repartos
+          vehiculo_descripcion: vehiculoDescripcion, // Redundant
+          destino_direccion: cliente.direccion,
+          notas: notasViaje || null, // Common notes from viaje, can be overridden per reparto if needed later
+          estado_reparto: 'Pendiente' as EstadoReparto,
+          user_id: user.id,
+        });
+      }
+
+      if (repartosToInsert.length === 0) {
+        // If no valid repartos, consider deleting the created viaje or handling as needed
+        // For now, we'll toast and not proceed with reparto insertion.
+        // Potentially, delete the viaje: await supabase.from('viajes').delete().eq('id', nuevoViajeId);
+        toast({ variant: 'info', title: 'No hay Repartos para Crear', description: 'Ninguno de los clientes seleccionados tenía una dirección válida. El viaje no contendrá repartos.' });
+      } else {
+        const { error: repartosError } = await supabase.from('repartos').insert(repartosToInsert);
+        if (repartosError) throw repartosError;
+        toast({ title: 'Repartos Asignados', description: `${repartosToInsert.length} reparto(s) creado(s) y asignados al viaje #${viajeData.codigo_viaje}.` });
+      }
+      
       onFormSubmit();
       setIsOpen(false);
     } catch (error: any) {
@@ -226,10 +253,10 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
         <DialogHeader>
           <DialogTitle className="text-2xl text-primary flex items-center">
             <PackagePlus className="mr-2 h-6 w-6" />
-            Asignar Repartos en Lote
+            Asignar Repartos en Lote (Nuevo Viaje)
           </DialogTitle>
           <DialogDescription>
-            Selecciona una empresa, clientes y un conductor para crear múltiples repartos.
+            Selecciona una empresa, clientes y un conductor para crear un nuevo viaje con múltiples repartos.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -250,7 +277,7 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="conductorLote" className="flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground" />Conductor Asignado</Label>
+                <Label htmlFor="conductorLote" className="flex items-center"><User className="mr-2 h-4 w-4 text-muted-foreground" />Conductor Asignado al Viaje</Label>
                 <Select value={selectedConductorId || ""} onValueChange={setSelectedConductorId} required>
                   <SelectTrigger id="conductorLote" disabled={loadingConductores}>
                     <SelectValue placeholder={loadingConductores ? "Cargando conductores..." : "Seleccionar conductor"} />
@@ -266,7 +293,7 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
 
             <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                    <Label className="flex items-center"><UsersIcon className="mr-2 h-4 w-4 text-muted-foreground" />Clientes de la Empresa Seleccionada</Label>
+                    <Label className="flex items-center"><UsersIcon className="mr-2 h-4 w-4 text-muted-foreground" />Clientes para este Viaje</Label>
                     {clientesEmpresa.length > 0 && (
                         <Button type="button" variant="link" size="sm" onClick={handleSelectAllClientes} disabled={loadingClientes}>
                             {selectedClienteIds.size === clientesEmpresa.length ? 'Deseleccionar Todos' : 'Seleccionar Todos'}
@@ -281,11 +308,11 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
                     {clientesEmpresa.map(cliente => (
                       <div key={cliente.id} className="flex items-center space-x-2 p-1.5 hover:bg-muted rounded-md">
                         <Checkbox
-                          id={`cliente-${cliente.id}`}
+                          id={`cliente-lote-${cliente.id}`}
                           checked={selectedClienteIds.has(cliente.id)}
                           onCheckedChange={() => handleClienteSelection(cliente.id)}
                         />
-                        <Label htmlFor={`cliente-${cliente.id}`} className="font-normal flex-grow cursor-pointer">
+                        <Label htmlFor={`cliente-lote-${cliente.id}`} className="font-normal flex-grow cursor-pointer">
                           {cliente.nombre_completo} <span className="text-xs text-muted-foreground">({cliente.direccion || 'Sin dirección'})</span>
                         </Label>
                       </div>
@@ -297,28 +324,28 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fechaInicioLote" className="flex items-center"><CalendarClock className="mr-2 h-4 w-4 text-muted-foreground" />Fecha de Inicio</Label>
+                <Label htmlFor="fechaInicioLote" className="flex items-center"><CalendarClock className="mr-2 h-4 w-4 text-muted-foreground" />Fecha Inicio del Viaje</Label>
                 <DatePicker date={fechaInicio} setDate={setFechaInicio} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="horaInicioLote">Hora de Inicio</Label>
+                <Label htmlFor="horaInicioLote">Hora Inicio del Viaje</Label>
                 <Input id="horaInicioLote" type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} required />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fechaFinEstimadaLote" className="flex items-center"><CalendarClock className="mr-2 h-4 w-4 text-muted-foreground" />Fecha Fin Estimada (Opc.)</Label>
+                <Label htmlFor="fechaFinEstimadaLote" className="flex items-center"><CalendarClock className="mr-2 h-4 w-4 text-muted-foreground" />Fecha Fin Estimada del Viaje (Opc.)</Label>
                 <DatePicker date={fechaFinEstimada} setDate={setFechaFinEstimada} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="horaFinEstimadaLote">Hora Fin Estimada (Opc.)</Label>
+                <Label htmlFor="horaFinEstimadaLote">Hora Fin Estimada del Viaje (Opc.)</Label>
                 <Input id="horaFinEstimadaLote" type="time" value={horaFinEstimada} onChange={(e) => setHoraFinEstimada(e.target.value)} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="vehiculoDescripcionLote" className="flex items-center"><TruckIcon className="mr-2 h-4 w-4 text-muted-foreground" />Descripción del Vehículo</Label>
+              <Label htmlFor="vehiculoDescripcionLote" className="flex items-center"><TruckIcon className="mr-2 h-4 w-4 text-muted-foreground" />Descripción del Vehículo del Viaje</Label>
               <Input
                 id="vehiculoDescripcionLote"
                 value={vehiculoDescripcion}
@@ -329,12 +356,12 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notasLote">Notas Comunes (Opcional)</Label>
+              <Label htmlFor="notasViajeLote">Notas Comunes para el Viaje (Opcional)</Label>
               <Textarea
-                id="notasLote"
-                value={notas}
-                onChange={(e) => setNotas(e.target.value)}
-                placeholder="Notas generales para todos los repartos de este lote..."
+                id="notasViajeLote"
+                value={notasViaje}
+                onChange={(e) => setNotasViaje(e.target.value)}
+                placeholder="Notas generales para este viaje/lote..."
                 rows={2}
               />
             </div>
@@ -346,7 +373,7 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
             </DialogClose>
             <Button type="submit" disabled={isSubmitting || loadingEmpresas || loadingConductores || loadingClientes} className="bg-accent hover:bg-accent/90 text-accent-foreground">
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PackagePlus className="mr-2 h-4 w-4" /> }
-              {isSubmitting ? 'Asignando Repartos...' : `Asignar ${selectedClienteIds.size > 0 ? selectedClienteIds.size : ''} Reparto(s)`}
+              {isSubmitting ? 'Creando Viaje y Repartos...' : `Crear Viaje con ${selectedClienteIds.size > 0 ? selectedClienteIds.size : ''} Reparto(s)`}
             </Button>
           </DialogFooter>
         </form>
@@ -354,5 +381,4 @@ export function AsignarRepartosLote({ isOpen, setIsOpen, onFormSubmit }: Asignar
     </Dialog>
   );
 }
-
     
