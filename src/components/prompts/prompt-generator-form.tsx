@@ -20,7 +20,10 @@ const PREDEFINED_PAGE_INTEGRATION_FILES = [
 ];
 
 const PREDEFINED_COMPONENT_INTEGRATION_FILES = [
-  { id: 'homePage', path: 'src/app/inicio/page.tsx', label: 'Página de Inicio (src/app/inicio/page.tsx)' },
+  { id: 'inicioPage', path: 'src/app/inicio/page.tsx', label: 'Página de Inicio (src/app/inicio/page.tsx)' },
+  { id: 'empresasPage', path: 'src/app/empresas/page.tsx', label: 'Página de Empresas (src/app/empresas/page.tsx)' },
+  { id: 'clientesPage', path: 'src/app/clientes/page.tsx', label: 'Página de Clientes (src/app/clientes/page.tsx)' },
+  { id: 'conductoresPage', path: 'src/app/conductores/page.tsx', label: 'Página de Conductores (src/app/conductores/page.tsx)' },
   { id: 'promptsPage', path: 'src/app/prompts/page.tsx', label: 'Página de Prompts (src/app/prompts/page.tsx)' },
   { id: 'loginPage', path: 'src/app/login/page.tsx', label: 'Página de Login (src/app/login/page.tsx)' },
   { id: 'signupPage', path: 'src/app/signup/page.tsx', label: 'Página de Signup (src/app/signup/page.tsx)' },
@@ -47,7 +50,7 @@ export function PromptGeneratorForm() {
 
   const handleElementTypeChange = (value: ElementType) => {
     setElementType(value);
-    setSelectedIntegrationFiles([]);
+    setSelectedIntegrationFiles([]); // Reset selections when type changes
     setCustomIntegrationPaths('');
   }
 
@@ -179,6 +182,12 @@ ${allIntegrationPaths.map(path => `     - ${path}`).join('\n')}
         <div className="space-y-2">
           <Label>Archivo(s) de Integración (Opcional)</Label>
           <div className="space-y-2 rounded-md border p-4">
+            <p className="text-xs text-muted-foreground mb-2">
+              {elementType === 'page' 
+                ? "Selecciona dónde quieres añadir un enlace a esta nueva página:"
+                : "Selecciona las páginas donde quieres integrar este nuevo componente:"
+              }
+            </p>
             {currentIntegrationFiles.map(file => (
               <div key={file.id} className="flex items-center space-x-2">
                 <Checkbox
@@ -204,7 +213,7 @@ ${allIntegrationPaths.map(path => `     - ${path}`).join('\n')}
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="detailedDescription">Descripción Detallada del Propósito y Funcionalidad</Label>
+        <Label htmlFor="detailedDescription">Propósito Detallado y Funcionalidad Clave</Label>
         <Textarea 
           id="detailedDescription" 
           value={detailedDescription} 
