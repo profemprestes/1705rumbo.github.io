@@ -31,14 +31,13 @@ export function Navbar() {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      setLoading(false);
+      setLoading(false); 
     }
     getUser();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      // Ensure loading is set to false once auth state is confirmed
-      setLoading(false);
+      setLoading(false); 
     });
 
     return () => {
@@ -53,7 +52,6 @@ export function Navbar() {
   const authenticatedNavLinks = [
     { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
-    // Add more authenticated links here as needed
   ];
 
   const commonLinkClasses = "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors";
@@ -72,7 +70,7 @@ export function Navbar() {
     </Link>
   ));
   
-  const renderAuthButtons = (isMobile = false) => !loading && !user && (
+  const renderAuthButtons = (isMobile = false) => (
     <>
       <Button asChild variant="ghost" className={`${isMobile ? 'w-full justify-start text-foreground/70 hover:text-foreground' : 'text-sm'}`}>
         <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="flex items-center gap-2">
@@ -87,7 +85,7 @@ export function Navbar() {
     </>
   );
 
-  const renderUserMenu = (isMobile = false) => !loading && user && (
+  const renderUserMenu = (isMobile = false) => (
     <>
     {isMobile && commonNavLinks.length === 0 && authenticatedNavLinks.length > 0 && <div className="border-t border-border my-2"></div>}
     <DropdownMenu>
@@ -95,10 +93,10 @@ export function Navbar() {
         <Button variant="ghost" className={`relative h-10 rounded-full ${isMobile ? 'w-full justify-start px-3 py-2 text-foreground/70 hover:text-foreground' : 'w-10'}`}>
           {isMobile && <UserCircle className="mr-2 h-4 w-4" />}
           <Avatar className={`h-8 w-8 ${isMobile ? 'hidden' : ''}`}>
-            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email || ''} />
-            <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+            <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || ''} />
+            <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          {isMobile && (user.email || 'Mi Cuenta')}
+          {isMobile && (user?.email || 'Mi Cuenta')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -106,7 +104,7 @@ export function Navbar() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">Conectado como</p>
             <p className="text-xs leading-none text-muted-foreground truncate">
-              {user.email}
+              {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -133,13 +131,13 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden items-center space-x-2 md:flex">
+        <div className="hidden items-center space-x-2 md:flex" suppressHydrationWarning>
           {renderNavLinksList(commonNavLinks)}
           {!loading && user && renderNavLinksList(authenticatedNavLinks)}
         </div>
-        <div className="hidden items-center space-x-2 md:flex">
-          {renderAuthButtons()}
-          {renderUserMenu()}
+        <div className="hidden items-center space-x-2 md:flex" suppressHydrationWarning>
+          {!loading && !user && renderAuthButtons()}
+          {!loading && user && renderUserMenu()}
         </div>
 
         {/* Mobile Navigation Trigger */}
@@ -164,16 +162,15 @@ export function Navbar() {
                     <span className="sr-only">Cerrar menú</span>
                   </Button>
                 </div>
-                <nav className="flex-grow p-4 space-y-2">
+                <nav className="flex-grow p-4 space-y-2" suppressHydrationWarning>
                   {renderNavLinksList(commonNavLinks, true)}
                   {!loading && user && renderNavLinksList(authenticatedNavLinks, true)}
                   
-                  {/* Divider for mobile menu if there are common links and user is logged out, or if there are auth links and user is logged in */}
-                  {(!loading && !user && commonNavLinks.length > 0 && renderAuthButtons(true)) && <div className="border-t border-border my-2"></div>}
+                  {(!loading && !user && (commonNavLinks.length > 0 || authenticatedNavLinks.length > 0)) && <div className="border-t border-border my-2"></div>}
                   {(user && authenticatedNavLinks.length > 0 && commonNavLinks.length > 0) && <div className="border-t border-border my-2"></div>}
 
-                  {renderAuthButtons(true)}
-                  {renderUserMenu(true)}
+                  {!loading && !user && renderAuthButtons(true)}
+                  {!loading && user && renderUserMenu(true)}
                 </nav>
               </div>
             </SheetContent>
