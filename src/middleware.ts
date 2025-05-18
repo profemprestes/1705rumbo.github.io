@@ -14,21 +14,27 @@ export async function middleware(request: NextRequest) {
 
   // Define public paths that don't require authentication or are part of the auth flow
   const publicPaths = [
+    '/', // Make the root public for landing/welcome
     '/login',
     '/signup',
     '/auth/auth-code-error',
-    '/prompts' // Added /prompts as a public path for now
+    '/prompts',
+    '/inicio' // Added /inicio as a public path for simulated login flow
   ];
 
   const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback');
 
-  // if user is signed in and the current path is /login or /signup, redirect to /
+  // if user is signed in and the current path is /login or /signup, redirect to /inicio
   if (session && (pathname === '/login' || pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/inicio', request.url));
   }
 
   // if user is not signed in and the current path is not a public one, redirect to /login
   if (!session && !isPublicPath) {
+    // Allow access to the root page even if not signed in, to show welcome message
+    if (pathname === '/') {
+      return response;
+    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
   
@@ -47,3 +53,4 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
+
