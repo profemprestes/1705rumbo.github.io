@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/hooks/use-toast';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/lib/supabase/database.types';
-import { AddressAutocomplete } from '@/components/common/AddressAutocomplete'; // Assuming you might want this for client address too
+import { AddressAutocomplete } from '@/components/common/AddressAutocomplete'; 
 import { Loader2 } from 'lucide-react';
 
 type Cliente = Tables<'clientes'>;
@@ -27,6 +27,8 @@ type Empresa = Tables<'empresas'>;
 
 const ESTADOS_CLIENTE = ['Activo', 'Inactivo', 'Potencial'] as const;
 type EstadoCliente = typeof ESTADOS_CLIENTE[number];
+
+const NO_EMPRESA_PLACEHOLDER = "NO_EMPRESA_SELECTED_PLACEHOLDER";
 
 interface CargaClienteProps {
   isOpen: boolean;
@@ -108,7 +110,7 @@ export function CargaCliente({ isOpen, setIsOpen, clienteToEdit, onFormSubmit }:
       email: email || null,
       telefono: telefono || null,
       direccion: direccion || null,
-      id_empresa_asociada: idEmpresaAsociada || null,
+      id_empresa_asociada: idEmpresaAsociada === NO_EMPRESA_PLACEHOLDER ? null : idEmpresaAsociada,
       estado,
     };
 
@@ -219,7 +221,10 @@ export function CargaCliente({ isOpen, setIsOpen, clienteToEdit, onFormSubmit }:
               <Label htmlFor="empresaAsociada" className="text-right col-span-1">
                 Empresa
               </Label>
-              <Select value={idEmpresaAsociada || ''} onValueChange={(value) => setIdEmpresaAsociada(value || null)}>
+              <Select 
+                value={idEmpresaAsociada || NO_EMPRESA_PLACEHOLDER} 
+                onValueChange={(value) => setIdEmpresaAsociada(value === NO_EMPRESA_PLACEHOLDER ? null : value)}
+              >
                 <SelectTrigger id="empresaAsociada" className="col-span-3" disabled={loadingEmpresas}>
                   <SelectValue placeholder={loadingEmpresas ? "Cargando empresas..." : "Seleccionar empresa (opcional)"} />
                 </SelectTrigger>
@@ -228,7 +233,7 @@ export function CargaCliente({ isOpen, setIsOpen, clienteToEdit, onFormSubmit }:
                     <SelectItem value="loading" disabled>Cargando...</SelectItem>
                   ) : (
                     <>
-                      <SelectItem value="">Ninguna</SelectItem>
+                      <SelectItem value={NO_EMPRESA_PLACEHOLDER}>Ninguna</SelectItem>
                       {empresas.map(emp => (
                         <SelectItem key={emp.id} value={emp.id}>
                           {emp.nombre} (Cód: {String(emp.codigo_empresa).padStart(4, '0')})

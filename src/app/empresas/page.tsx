@@ -7,6 +7,8 @@ import { HeroEmpresas } from '@/components/empresas/HeroEmpresas';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Gestión de Empresas',
   description: 'Administra la información de las empresas registradas en RumboEnvios.',
@@ -22,10 +24,6 @@ export default async function EmpresasPage() {
     }
   } catch (error) {
     console.error("Error fetching user in EmpresasPage:", error);
-    // Optionally, redirect to an error page or show a generic error message
-    // For now, we'll let it fall through, which might still result in an error
-    // if user-dependent data is expected, but the console log will be there.
-    // Consider a more graceful fallback if this becomes a common issue.
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
             <h1 className="text-2xl font-bold text-destructive mb-4">Error del Servidor</h1>

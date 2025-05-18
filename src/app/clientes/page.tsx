@@ -7,6 +7,8 @@ import { ListarClientes } from '@/components/clientes/ListarClientes';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Gestión de Clientes',
   description: 'Administra la información de los clientes registrados en RumboEnvios.',

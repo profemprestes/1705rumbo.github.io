@@ -7,6 +7,8 @@ import { ListarConductores } from '@/components/conductores/ListarConductores';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Gestión de Conductores',
   description: 'Administra la información de los conductores registrados en RumboEnvios.',

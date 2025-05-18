@@ -25,6 +25,7 @@ type Empresa = Tables<'empresas'>;
 type EstadoConductor = Enums<'estado_conductor'>;
 
 const ESTADOS_CONDUCTOR: EstadoConductor[] = ['Activo', 'Inactivo', 'De Viaje', 'En Descanso'];
+const NO_EMPRESA_PLACEHOLDER = "NO_EMPRESA_SELECTED_PLACEHOLDER";
 
 interface CargaConductorProps {
   isOpen: boolean;
@@ -105,13 +106,10 @@ export function CargaConductor({ isOpen, setIsOpen, conductorToEdit, onFormSubmi
       nombre_completo: nombreCompleto,
       telefono: telefono || null,
       email: email || null,
-      // password_temporal is intentionally not saved for now, as its secure handling is complex.
-      // If needed, a proper password reset/invite flow would be required.
-      // password_temporal: passwordTemporal || null, 
-      id_empresa_asociada: idEmpresaAsociada || null,
+      id_empresa_asociada: idEmpresaAsociada === NO_EMPRESA_PLACEHOLDER ? null : idEmpresaAsociada,
       estado,
     };
-     if (passwordTemporal && !conductorToEdit) { // Only set for new users if provided
+     if (passwordTemporal && !conductorToEdit) { 
       conductorData.password_temporal = passwordTemporal;
     }
 
@@ -119,7 +117,6 @@ export function CargaConductor({ isOpen, setIsOpen, conductorToEdit, onFormSubmi
     try {
       if (conductorToEdit && conductorToEdit.id) {
         const updateData: TablesUpdate<'conductores'> = { ...conductorData };
-        // Do not update password_temporal on edit unless explicitly designed to
         delete updateData.password_temporal; 
 
         const { error } = await supabase
@@ -133,7 +130,7 @@ export function CargaConductor({ isOpen, setIsOpen, conductorToEdit, onFormSubmi
         const insertData: TablesInsert<'conductores'> = { 
             ...conductorData, 
             user_id: user.id, 
-            nombre_completo: nombreCompleto // ensure required field is present
+            nombre_completo: nombreCompleto 
         };
         const { error } = await supabase
           .from('conductores')
@@ -228,7 +225,10 @@ export function CargaConductor({ isOpen, setIsOpen, conductorToEdit, onFormSubmi
               <Label htmlFor="empresaAsociadaConductor" className="text-right col-span-1">
                 Empresa
               </Label>
-              <Select value={idEmpresaAsociada || ''} onValueChange={(value) => setIdEmpresaAsociada(value || null)}>
+              <Select 
+                value={idEmpresaAsociada || NO_EMPRESA_PLACEHOLDER} 
+                onValueChange={(value) => setIdEmpresaAsociada(value === NO_EMPRESA_PLACEHOLDER ? null : value)}
+              >
                 <SelectTrigger id="empresaAsociadaConductor" className="col-span-3" disabled={loadingEmpresas}>
                   <SelectValue placeholder={loadingEmpresas ? "Cargando empresas..." : "Seleccionar empresa (opcional)"} />
                 </SelectTrigger>
@@ -237,7 +237,7 @@ export function CargaConductor({ isOpen, setIsOpen, conductorToEdit, onFormSubmi
                     <SelectItem value="loading" disabled>Cargando...</SelectItem>
                   ) : (
                     <>
-                      <SelectItem value="">Ninguna</SelectItem>
+                      <SelectItem value={NO_EMPRESA_PLACEHOLDER}>Ninguna</SelectItem>
                       {empresas.map(emp => (
                         <SelectItem key={emp.id} value={emp.id}>
                           {emp.nombre} (Cód: {String(emp.codigo_empresa).padStart(4, '0')})

@@ -3,36 +3,45 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createSupabaseMiddlewareClient } from '@/lib/supabase/middleware';
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-  const supabase = await createSupabaseMiddlewareClient(request, response);
+  let response = NextResponse.next();
+  let supabase;
+  let session = null;
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  try {
+    supabase = await createSupabaseMiddlewareClient(request, response);
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
+  } catch (error) {
+    console.error('Error in middleware during Supabase operation:', error);
+    // Allow request to proceed, user will be treated as unauthenticated
+    // if session could not be retrieved.
+    // Re-initialize response because the original one might have been modified by createSupabaseMiddlewareClient before throwing
+    response = NextResponse.next(); 
+    // It's important to ensure request headers are also passed along if `NextResponse.next(request)` was intended.
+    // For simplicity, we'll just forward a basic next response.
+    // If you have specific request headers to preserve, you'd do:
+    // const newHeaders = new Headers(request.headers)
+    // response = NextResponse.next({ request: { headers: newHeaders }})
+  }
 
   const { pathname } = request.nextUrl;
 
-  // Define public paths that don't require authentication or are part of the auth flow
   const publicPaths = [
     '/login',
     '/signup',
     '/auth/auth-code-error',
-    '/', // Make the root public for landing/welcome
+    '/', // Root is public for welcome
   ];
 
-  // Paths that are public IF a user is NOT logged in, but should redirect if logged in.
   const authFlowPaths = ['/login', '/signup'];
 
   const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback');
   const isAuthFlowPath = authFlowPaths.includes(pathname);
 
-
-  // if user is signed in and on an auth flow path (login/signup), redirect to /inicio
   if (session && isAuthFlowPath) {
     return NextResponse.redirect(new URL('/inicio', request.url));
   }
 
-  // if user is not signed in and the current path is not a public one, redirect to /login
   if (!session && !isPublicPath) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
