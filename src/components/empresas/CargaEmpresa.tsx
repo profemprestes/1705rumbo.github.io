@@ -14,11 +14,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+// import { Textarea } from "@/components/ui/textarea"; // Replaced by AddressAutocomplete
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/lib/supabase/database.types';
+import { AddressAutocomplete } from '@/components/common/AddressAutocomplete'; // Import the new component
 
 type Empresa = Tables<'empresas'>;
 
@@ -39,7 +40,7 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
   const [nombre, setNombre] = useState('');
   const [industria, setIndustria] = useState('');
   const [emailContacto, setEmailContacto] = useState('');
-  const [direccion, setDireccion] = useState('');
+  const [direccion, setDireccion] = useState(''); // This will be controlled by AddressAutocomplete
   const [estado, setEstado] = useState<EstadoEmpresa>('Activo');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -81,9 +82,8 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
       nombre,
       industria: industria || null,
       email_contacto: emailContacto || null,
-      direccion: direccion || null,
+      direccion: direccion || null, // Direccion comes from state updated by AddressAutocomplete
       estado,
-      // user_id is handled by RLS or default on insert if needed, or must be set if required by table
     };
 
     try {
@@ -123,6 +123,10 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
       setIsLoading(false);
     }
   };
+  
+  const handleAddressSelected = (selectedAddress: string) => {
+    setDireccion(selectedAddress);
+  };
 
   if (!isOpen) return null;
 
@@ -140,11 +144,11 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nombre" className="text-right col-span-1">
+              <Label htmlFor="nombre-empresa" className="text-right col-span-1">
                 Nombre
               </Label>
               <Input
-                id="nombre"
+                id="nombre-empresa"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 className="col-span-3"
@@ -177,25 +181,29 @@ export function CargaEmpresa({ isOpen, setIsOpen, empresaToEdit, onFormSubmit }:
                 placeholder="contacto@empresa.com"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="direccion" className="text-right col-span-1">
+            
+            {/* Replace Textarea with AddressAutocomplete */}
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="direccion-autocomplete" className="text-right col-span-1 pt-2">
                 Dirección
               </Label>
-              <Textarea
-                id="direccion"
-                value={direccion}
-                onChange={(e) => setDireccion(e.target.value)}
-                className="col-span-3"
-                placeholder="Calle Falsa 123, Ciudad, Provincia"
-                rows={3}
-              />
+              <div className="col-span-3">
+                <AddressAutocomplete
+                  id="direccion-autocomplete"
+                  label="" // Label is provided by the grid
+                  initialValue={direccion}
+                  onAddressSelected={handleAddressSelected}
+                  placeholder="Buscar dirección en Mar del Plata..."
+                />
+              </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="estado" className="text-right col-span-1">
                 Estado
               </Label>
               <Select value={estado} onValueChange={(value: EstadoEmpresa) => setEstado(value)}>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="estado" className="col-span-3">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>

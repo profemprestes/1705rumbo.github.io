@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google'; // Corrected import for new Next.js font handling
+import Script from 'next/script'; // Added for Google Maps
 import './globals.css';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
@@ -56,11 +57,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body 
+      <body
         className="antialiased flex flex-col min-h-screen bg-background"
-        suppressHydrationWarning={true} // Added to attempt to suppress the warning
+        suppressHydrationWarning={true} 
       >
         <Navbar />
         <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -68,6 +71,27 @@ export default function RootLayout({
         </main>
         <Footer />
         <Toaster />
+        {googleMapsApiKey && (
+          <Script
+            id="google-maps-script"
+            src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&callback=initMap`}
+            strategy="afterInteractive"
+            async
+            defer
+          />
+        )}
+        {/* Define a dummy initMap if callback is used and not defined elsewhere, or remove callback=initMap if not needed for Places library init */}
+        <Script id="google-maps-init-callback" strategy="afterInteractive">
+          {`
+            function initMap() {
+              // This function can be empty if the Places library initializes itself upon loading.
+              // Or it can be used to signal that the API is ready.
+              window.googleMapsApiLoaded = true;
+              const event = new Event('googleMapsApiLoaded');
+              window.dispatchEvent(event);
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
