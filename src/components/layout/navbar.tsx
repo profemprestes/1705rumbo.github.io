@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2, Users, SteeringWheel } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2, Users, Truck } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -51,7 +51,7 @@ export function Navbar() {
     { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
     { href: '/empresas', label: 'Empresas', icon: <Building2 className="h-4 w-4" /> },
     { href: '/clientes', label: 'Clientes', icon: <Users className="h-4 w-4" /> },
-    { href: '/conductores', label: 'Conductores', icon: <SteeringWheel className="h-4 w-4" /> },
+    { href: '/conductores', label: 'Conductores', icon: <Truck className="h-4 w-4" /> },
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
   ];
 
