@@ -54,9 +54,10 @@ export function ListarEmpresas() {
       setEmpresas(data || []);
     } catch (err: any) {
       console.error("Error fetching empresas:", err);
-      setError(err.message || "Error al cargar datos de empresas.");
+      const errorMessage = err.message || "Error al cargar datos de empresas.";
+      setError(errorMessage);
       setEmpresas([]);
-      toast({ variant: 'destructive', title: 'Error de Carga', description: err.message || "No se pudieron cargar las empresas." });
+      toast({ variant: 'destructive', title: 'Error de Carga', description: errorMessage });
     } finally {
       setLoading(false);
     }

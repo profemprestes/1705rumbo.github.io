@@ -66,13 +66,7 @@ export function DetalleViaje({ viajeId, isOpen, setIsOpen }: DetalleViajeProps) 
       try {
         const { data: viajeData, error: viajeError } = await supabase
           .from('viajes')
-          .select(\`
-            *,
-            conductores (
-              *,
-              empresas (*)
-            )
-          \`)
+          .select('*, conductores (*, empresas (*))') // Updated to single-line string
           .eq('id', viajeId)
           .single();
 
@@ -81,10 +75,7 @@ export function DetalleViaje({ viajeId, isOpen, setIsOpen }: DetalleViajeProps) 
 
         const { data: repartosData, error: repartosError } = await supabase
           .from('repartos')
-          .select(\`
-            *,
-            conductores (nombre_completo)
-          \`)
+          .select('*, conductores (nombre_completo)') // Updated to single-line string
           .eq('id_viaje', viajeId)
           .order('codigo_reparto', { ascending: true });
 

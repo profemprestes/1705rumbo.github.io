@@ -4,8 +4,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ListarEmpresas } from "@/components/empresas/ListarEmpresas";
 import { HeroEmpresas } from '@/components/empresas/HeroEmpresas';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+// Removed Button and Link as they are not used in the simplified error case
+// import { Button } from '@/components/ui/button';
+// import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,15 +25,11 @@ export default async function EmpresasPage() {
     }
   } catch (error) {
     console.error("Error fetching user in EmpresasPage:", error);
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-4">Error del Servidor</h1>
-            <p className="text-muted-foreground mb-4">No se pudo verificar la autenticación del usuario. Por favor, inténtalo de nuevo más tarde.</p>
-            <Button asChild>
-                <Link href="/">Volver al Inicio</Link>
-            </Button>
-        </div>
-    );
+    // Return a very simple text response for debugging
+    return new Response("Error del Servidor: No se pudo verificar la autenticación del usuario. Por favor, inténtalo de nuevo más tarde.", {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' },
+    });
   }
 
   return (
