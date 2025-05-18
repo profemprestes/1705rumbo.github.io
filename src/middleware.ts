@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
 
   // Define public paths that don't require authentication or are part of the auth flow
   const publicPaths = [
-    '/', // Make the root public for landing/welcome
+    // Removed '/' from here
     '/login',
     '/signup',
     '/auth/auth-code-error',
@@ -31,10 +31,9 @@ export async function middleware(request: NextRequest) {
 
   // if user is not signed in and the current path is not a public one, redirect to /login
   if (!session && !isPublicPath) {
-    // Allow access to the root page even if not signed in, to show welcome message
-    if (pathname === '/') {
-      return response;
-    }
+    // The root path '/' is no longer public.
+    // Any attempt to access a non-public path without a session (including '/')
+    // will now redirect to /login.
     return NextResponse.redirect(new URL('/login', request.url));
   }
   
@@ -53,4 +52,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
-
