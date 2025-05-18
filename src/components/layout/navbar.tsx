@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2, Users } from 'lucide-react';
+import { LogOut, UserCircle, LogIn, UserPlus, Menu, X, Home, Package, Terminal, Building2, Users, SteeringWheel } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -51,6 +51,7 @@ export function Navbar() {
     { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
     { href: '/empresas', label: 'Empresas', icon: <Building2 className="h-4 w-4" /> },
     { href: '/clientes', label: 'Clientes', icon: <Users className="h-4 w-4" /> },
+    { href: '/conductores', label: 'Conductores', icon: <SteeringWheel className="h-4 w-4" /> },
     { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
   ];
 
@@ -123,7 +124,7 @@ export function Navbar() {
   );
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" suppressHydrationWarning>
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href={user ? "/inicio" : "/"} className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
           <Package className="h-8 w-8 text-primary" />

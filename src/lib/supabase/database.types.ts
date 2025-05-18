@@ -97,32 +97,32 @@ export type Database = {
           }
         ]
       }
-      clientes: { // New table for clients
+      clientes: { 
         Row: {
-          id: string // UUID
-          codigo_cliente: number // SERIAL, auto-incrementing
+          id: string 
+          codigo_cliente: number 
           nombre_completo: string
           email: string | null
           telefono: string | null
           direccion: string | null
-          id_empresa_asociada: string | null // UUID, FK to empresas.id
-          estado: string | null // e.g., 'Activo', 'Inactivo'
-          user_id: string | null // UUID, references auth.users.id
-          created_at: string // TIMESTAMPTZ
-          updated_at: string // TIMESTAMPTZ
+          id_empresa_asociada: string | null 
+          estado: string | null 
+          user_id: string | null 
+          created_at: string 
+          updated_at: string 
         }
         Insert: {
-          id?: string // Default is gen_random_uuid()
-          codigo_cliente?: never // SERIAL, handled by database
+          id?: string 
+          codigo_cliente?: never 
           nombre_completo: string
           email?: string | null
           telefono?: string | null
           direccion?: string | null
           id_empresa_asociada?: string | null
-          estado?: string | null // Default is 'Activo'
-          user_id: string // Associated user
-          created_at?: string // Default is NOW()
-          updated_at?: string // Default is NOW()
+          estado?: string | null 
+          user_id: string 
+          created_at?: string 
+          updated_at?: string 
         }
         Update: {
           id?: string
@@ -135,7 +135,7 @@ export type Database = {
           estado?: string | null
           user_id?: string
           created_at?: string
-          updated_at?: string // Handled by trigger
+          updated_at?: string 
         }
         Relationships: [
           {
@@ -154,6 +154,63 @@ export type Database = {
           }
         ]
       }
+      conductores: { // New table for drivers
+        Row: {
+          id: string // UUID
+          codigo_conductor: number // SERIAL, auto-incrementing
+          nombre_completo: string
+          telefono: string | null
+          email: string | null
+          password_temporal: string | null
+          id_empresa_asociada: string | null // UUID, FK to empresas.id
+          estado: Database["public"]["Enums"]["estado_conductor"] | null // e.g., 'Activo', 'Inactivo', 'De Viaje'
+          user_id: string | null // UUID, references auth.users.id (who created this record)
+          created_at: string // TIMESTAMPTZ
+          updated_at: string // TIMESTAMPTZ
+        }
+        Insert: {
+          id?: string // Default is gen_random_uuid()
+          codigo_conductor?: never // SERIAL, handled by database
+          nombre_completo: string
+          telefono?: string | null
+          email?: string | null
+          password_temporal?: string | null
+          id_empresa_asociada?: string | null
+          estado?: Database["public"]["Enums"]["estado_conductor"] | null // Default is 'Activo'
+          user_id: string // Associated app user who created this record
+          created_at?: string // Default is NOW()
+          updated_at?: string // Default is NOW()
+        }
+        Update: {
+          id?: string
+          codigo_conductor?: never
+          nombre_completo?: string
+          telefono?: string | null
+          email?: string | null
+          password_temporal?: string | null
+          id_empresa_asociada?: string | null
+          estado?: Database["public"]["Enums"]["estado_conductor"] | null
+          user_id?: string
+          created_at?: string
+          updated_at?: string // Handled by trigger
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conductores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conductores_id_empresa_asociada_fkey"
+            columns: ["id_empresa_asociada"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       // Add your view definitions here
@@ -163,7 +220,11 @@ export type Database = {
         Args: {}
         Returns: unknown
       }
-      handle_cliente_updated_at: { // Function for clientes table
+      handle_cliente_updated_at: { 
+        Args: {}
+        Returns: unknown
+      }
+      handle_conductor_updated_at: { // Function for conductores table
         Args: {}
         Returns: unknown
       }
@@ -174,7 +235,7 @@ export type Database = {
     }
     Enums: {
       type_industria: "delivery" | "viandas" | "mensajeria" | "flex"
-      // Add your enum definitions here
+      estado_conductor: "Activo" | "Inactivo" | "De Viaje" | "En Descanso"
     }
     CompositeTypes: {
       // Add your composite type definitions here
