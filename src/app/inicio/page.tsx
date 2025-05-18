@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 
 export default async function InicioPage() {
   const supabase = createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login'); // Ensure user is logged in
-  }
+  // if (!user) {
+  //   redirect('/login'); // Temporarily commented out for simulated login
+  // }
 
   return (
     <DashboardInicio /> // Render the new component
