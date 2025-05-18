@@ -48,25 +48,29 @@ export function ListarClientes() {
   const fetchClientes = async () => {
     setLoading(true);
     setError(null);
-    // Fetch clientes and join with empresas table to get empresa.nombre
-    const { data, error: fetchError } = await supabase
-      .from('clientes')
-      .select(`
-        *,
-        empresas (
-          nombre
-        )
-      `)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('clientes')
+        .select(`
+          *,
+          empresas (
+            nombre
+          )
+        `)
+        .order('created_at', { ascending: false });
 
-    if (fetchError) {
-      console.error("Error fetching clientes:", fetchError);
-      setError(fetchError.message);
-      setClientes([]);
-    } else {
+      if (fetchError) {
+        throw fetchError;
+      }
       setClientes(data as ClienteConEmpresa[] || []);
+    } catch (err: any) {
+      console.error("Error fetching clientes:", err);
+      setError(err.message || "Error al cargar datos de clientes.");
+      setClientes([]);
+      toast({ variant: 'destructive', title: 'Error de Carga', description: err.message || "No se pudieron cargar los clientes." });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -76,7 +80,7 @@ export function ListarClientes() {
   const getStatusBadgeVariant = (status: string | null): "default" | "secondary" | "destructive" | "outline" => {
     switch (status?.toLowerCase()) {
       case 'activo':
-        return 'default'; // Greenish if default is accent
+        return 'default'; 
       case 'inactivo':
         return 'destructive';
       case 'potencial':
@@ -104,17 +108,6 @@ export function ListarClientes() {
   const confirmDelete = async () => {
     if (!clienteToDelete) return;
     
-    // Placeholder for actual delete logic
-    // const { error: deleteError } = await supabase.from('clientes').delete().eq('id', clienteToDelete.id);
-    // if (deleteError) {
-    //   toast({ variant: 'destructive', title: 'Error', description: `No se pudo eliminar el cliente: ${deleteError.message}`});
-    // } else {
-    //   toast({ title: 'Cliente Eliminado', description: `El cliente ${clienteToDelete.nombre_completo} ha sido eliminado.` });
-    //   fetchClientes(); // Refresh list
-    // }
-    // setIsAlertOpen(false);
-    // setClienteToDelete(null);
-
     console.log("Confirm delete for:", clienteToDelete.nombre_completo);
     toast({ title: 'Función Deshabilitada', description: `La eliminación de ${clienteToDelete.nombre_completo} está deshabilitada en esta demo.` });
     setIsAlertOpen(false);
@@ -132,11 +125,15 @@ export function ListarClientes() {
 
   if (error) {
     return (
-      <div className="text-center py-10 text-destructive">
-        <p className="text-lg font-semibold">Error al cargar clientes</p>
-        <p>{error}</p>
-        <Button onClick={fetchClientes} className="mt-4">Reintentar</Button>
-      </div>
+      <Card className="shadow-md rounded-lg w-full my-4 border-destructive bg-destructive/10">
+        <CardHeader>
+          <CardTitle className="text-destructive">Error al Cargar Clientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive-foreground">{error}</p>
+          <Button onClick={fetchClientes} className="mt-4" variant="secondary">Reintentar</Button>
+        </CardContent>
+      </Card>
     );
   }
 

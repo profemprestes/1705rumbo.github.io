@@ -6,7 +6,7 @@ import { Building2 } from 'lucide-react';
 
 export function HeroEmpresas() {
   return (
-    <Card className="shadow-lg rounded-lg">
+    <Card className="shadow-lg rounded-lg mb-6">
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-primary flex items-center">
           <Building2 className="mr-3 h-8 w-8" />
@@ -19,3 +19,4 @@ export function HeroEmpresas() {
     </Card>
   );
 }
+

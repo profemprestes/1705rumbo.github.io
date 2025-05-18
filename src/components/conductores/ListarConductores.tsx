@@ -48,24 +48,29 @@ export function ListarConductores() {
   const fetchConductores = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: fetchError } = await supabase
-      .from('conductores')
-      .select(`
-        *,
-        empresas (
-          nombre
-        )
-      `)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('conductores')
+        .select(\`
+          *,
+          empresas (
+            nombre
+          )
+        \`)
+        .order('created_at', { ascending: false });
 
-    if (fetchError) {
-      console.error("Error fetching conductores:", fetchError);
-      setError(fetchError.message);
-      setConductores([]);
-    } else {
+      if (fetchError) {
+        throw fetchError;
+      }
       setConductores(data as ConductorConEmpresa[] || []);
+    } catch (err: any) {
+      console.error("Error fetching conductores:", err);
+      setError(err.message || "Error al cargar datos de conductores.");
+      setConductores([]);
+      toast({ variant: 'destructive', title: 'Error de Carga', description: err.message || "No se pudieron cargar los conductores." });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -75,13 +80,13 @@ export function ListarConductores() {
   const getStatusBadgeVariant = (status: EstadoConductor | null): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'Activo':
-        return 'default'; // Greenish if default is accent
+        return 'default'; 
       case 'Inactivo':
         return 'destructive';
       case 'De Viaje':
-        return 'secondary'; // Maybe a blueish/purpleish color
+        return 'secondary'; 
       case 'En Descanso':
-        return 'outline'; // Neutral
+        return 'outline'; 
       default:
         return 'outline';
     }
@@ -105,17 +110,6 @@ export function ListarConductores() {
   const confirmDelete = async () => {
     if (!conductorToDelete) return;
     
-    // Placeholder for actual delete logic
-    // const { error: deleteError } = await supabase.from('conductores').delete().eq('id', conductorToDelete.id);
-    // if (deleteError) {
-    //   toast({ variant: 'destructive', title: 'Error', description: `No se pudo eliminar el conductor: ${deleteError.message}`});
-    // } else {
-    //   toast({ title: 'Conductor Eliminado', description: `El conductor ${conductorToDelete.nombre_completo} ha sido eliminado.` });
-    //   fetchConductores(); // Refresh list
-    // }
-    // setIsAlertOpen(false);
-    // setConductorToDelete(null);
-
     console.log("Confirm delete for:", conductorToDelete.nombre_completo);
     toast({ title: 'Función Deshabilitada', description: `La eliminación de ${conductorToDelete.nombre_completo} está deshabilitada en esta demo.` });
     setIsAlertOpen(false);
@@ -132,12 +126,16 @@ export function ListarConductores() {
   }
 
   if (error) {
-    return (
-      <div className="text-center py-10 text-destructive">
-        <p className="text-lg font-semibold">Error al cargar conductores</p>
-        <p>{error}</p>
-        <Button onClick={fetchConductores} className="mt-4">Reintentar</Button>
-      </div>
+     return (
+      <Card className="shadow-md rounded-lg w-full my-4 border-destructive bg-destructive/10">
+        <CardHeader>
+          <CardTitle className="text-destructive">Error al Cargar Conductores</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive-foreground">{error}</p>
+          <Button onClick={fetchConductores} className="mt-4" variant="secondary">Reintentar</Button>
+        </CardContent>
+      </Card>
     );
   }
 

@@ -19,7 +19,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast";
 
@@ -43,26 +42,31 @@ export function ListarEmpresas() {
   const fetchEmpresas = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: fetchError } = await supabase
-      .from('empresas')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('empresas')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (fetchError) {
-      console.error("Error fetching empresas:", fetchError);
-      setError(fetchError.message);
-      setEmpresas([]);
-    } else {
+      if (fetchError) {
+        throw fetchError;
+      }
       setEmpresas(data || []);
+    } catch (err: any) {
+      console.error("Error fetching empresas:", err);
+      setError(err.message || "Error al cargar datos de empresas.");
+      setEmpresas([]);
+      toast({ variant: 'destructive', title: 'Error de Carga', description: err.message || "No se pudieron cargar las empresas." });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchEmpresas();
   }, []);
 
-  const getStatusBadgeVariant = (status: string | null): "default" | "secondary" | "destructive" => {
+  const getStatusBadgeVariant = (status: string | null): "default" | "secondary" | "destructive" | "outline" => {
     switch (status?.toLowerCase()) {
       case 'activo':
         return 'default';
@@ -71,7 +75,7 @@ export function ListarEmpresas() {
       case 'pendiente':
         return 'secondary';
       default:
-        return 'secondary';
+        return 'outline'; // Changed from secondary to outline for unknown status
     }
   };
 
@@ -122,11 +126,15 @@ export function ListarEmpresas() {
 
   if (error) {
     return (
-      <div className="text-center py-10 text-destructive">
-        <p className="text-lg font-semibold">Error al cargar empresas</p>
-        <p>{error}</p>
-        <Button onClick={fetchEmpresas} className="mt-4">Reintentar</Button>
-      </div>
+      <Card className="shadow-md rounded-lg w-full my-4 border-destructive bg-destructive/10">
+        <CardHeader>
+          <CardTitle className="text-destructive">Error al Cargar Empresas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-destructive-foreground">{error}</p>
+          <Button onClick={fetchEmpresas} className="mt-4" variant="secondary">Reintentar</Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -149,7 +157,7 @@ export function ListarEmpresas() {
           {empresas.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               <p className="text-lg">No hay empresas registradas todavía.</p>
-              <p>¡Empieza cargando una nueva para verla aquí!</p>
+              <p>¡Empieza cargando una nueva para verlo aquí!</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
