@@ -17,11 +17,12 @@ export async function middleware(request: NextRequest) {
     '/login',
     '/signup',
     '/auth/auth-code-error',
-    '/prompts' 
+    // REMOVED: '/prompts' - it's now protected
     // REMOVED: '/inicio' - it's now protected
   ];
 
-  const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback');
+  const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/api/auth/callback') || pathname === '/';
+
 
   // if user is signed in and the current path is /login or /signup, redirect to /inicio
   if (session && (pathname === '/login' || pathname === '/signup')) {

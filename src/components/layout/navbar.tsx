@@ -44,12 +44,14 @@ export function Navbar() {
     };
   }, [supabase.auth]);
 
+  // Links comunes que no requieren autenticación (si los hubiera)
   const commonNavLinks = [
-    { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
+    // Ejemplo: { href: '/public-page', label: 'Página Pública', icon: <Package className="h-4 w-4" /> },
   ];
 
   const authenticatedNavLinks = [
     { href: '/inicio', label: 'Inicio', icon: <Home className="h-4 w-4" /> },
+    { href: '/prompts', label: 'Generar Prompts', icon: <Terminal className="h-4 w-4" /> },
     // Add more authenticated links here as needed
   ];
 
@@ -86,7 +88,7 @@ export function Navbar() {
 
   const renderUserMenu = (isMobile = false) => !loading && user && (
     <>
-    {isMobile && <div className="border-t border-border my-2"></div>}
+    {isMobile && commonNavLinks.length === 0 && authenticatedNavLinks.length > 0 && <div className="border-t border-border my-2"></div>}
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className={`relative h-10 rounded-full ${isMobile ? 'w-full justify-start px-3 py-2 text-foreground/70 hover:text-foreground' : 'w-10'}`}>
@@ -164,7 +166,11 @@ export function Navbar() {
                 <nav className="flex-grow p-4 space-y-2">
                   {renderNavLinksList(commonNavLinks, true)}
                   {user && renderNavLinksList(authenticatedNavLinks, true)}
-                  <div className="border-t border-border my-2"></div>
+                  
+                  {/* Divider for mobile menu if there are common links and user is logged out, or if there are auth links and user is logged in */}
+                  {(!user && commonNavLinks.length > 0 && renderAuthButtons(true)) && <div className="border-t border-border my-2"></div>}
+                  {(user && authenticatedNavLinks.length > 0 && commonNavLinks.length > 0) && <div className="border-t border-border my-2"></div>}
+
                   {renderAuthButtons(true)}
                   {renderUserMenu(true)}
                 </nav>
