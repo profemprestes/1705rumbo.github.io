@@ -51,12 +51,7 @@ export function ListarConductores() {
     try {
       const { data, error: fetchError } = await supabase
         .from('conductores')
-        .select(\`
-          *,
-          empresas (
-            nombre
-          )
-        \`)
+        .select('*, empresas(nombre)') // Changed to single-line string
         .order('created_at', { ascending: false });
 
       if (fetchError) {
@@ -65,9 +60,10 @@ export function ListarConductores() {
       setConductores(data as ConductorConEmpresa[] || []);
     } catch (err: any) {
       console.error("Error fetching conductores:", err);
-      setError(err.message || "Error al cargar datos de conductores.");
+      const errorMessage = err.message || "Error al cargar datos de conductores.";
+      setError(errorMessage);
       setConductores([]);
-      toast({ variant: 'destructive', title: 'Error de Carga', description: err.message || "No se pudieron cargar los conductores." });
+      toast({ variant: 'destructive', title: 'Error de Carga', description: errorMessage });
     } finally {
       setLoading(false);
     }

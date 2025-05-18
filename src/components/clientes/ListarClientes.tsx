@@ -51,12 +51,7 @@ export function ListarClientes() {
     try {
       const { data, error: fetchError } = await supabase
         .from('clientes')
-        .select(`
-          *,
-          empresas (
-            nombre
-          )
-        `)
+        .select('*, empresas(nombre)') // Changed to single-line string
         .order('created_at', { ascending: false });
 
       if (fetchError) {
@@ -65,9 +60,10 @@ export function ListarClientes() {
       setClientes(data as ClienteConEmpresa[] || []);
     } catch (err: any) {
       console.error("Error fetching clientes:", err);
-      setError(err.message || "Error al cargar datos de clientes.");
+      const errorMessage = err.message || "Error al cargar datos de clientes.";
+      setError(errorMessage);
       setClientes([]);
-      toast({ variant: 'destructive', title: 'Error de Carga', description: err.message || "No se pudieron cargar los clientes." });
+      toast({ variant: 'destructive', title: 'Error de Carga', description: errorMessage });
     } finally {
       setLoading(false);
     }

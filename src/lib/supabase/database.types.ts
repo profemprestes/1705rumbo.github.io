@@ -55,7 +55,7 @@ export type Database = {
           id: string
           codigo_empresa: number
           nombre: string
-          industria: string | null // Corresponds to type_industria enum in DB
+          industria: Database["public"]["Enums"]["type_industria"] | null
           email_contacto: string | null
           estado: string | null
           direccion: string | null
@@ -67,7 +67,7 @@ export type Database = {
           id?: string
           codigo_empresa?: never
           nombre: string
-          industria?: string | null
+          industria?: Database["public"]["Enums"]["type_industria"] | null
           email_contacto?: string | null
           estado?: string | null
           direccion?: string | null
@@ -79,7 +79,7 @@ export type Database = {
           id?: string
           codigo_empresa?: never
           nombre?: string
-          industria?: string | null
+          industria?: Database["public"]["Enums"]["type_industria"] | null
           email_contacto?: string | null
           estado?: string | null
           direccion?: string | null
@@ -97,32 +97,32 @@ export type Database = {
           }
         ]
       }
-      clientes: { 
+      clientes: {
         Row: {
-          id: string 
-          codigo_cliente: number 
+          id: string
+          codigo_cliente: number
           nombre_completo: string
           email: string | null
           telefono: string | null
           direccion: string | null
-          id_empresa_asociada: string | null 
-          estado: string | null 
-          user_id: string | null 
-          created_at: string 
-          updated_at: string 
+          id_empresa_asociada: string | null
+          estado: string | null
+          user_id: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          id?: string 
-          codigo_cliente?: never 
+          id?: string
+          codigo_cliente?: never
           nombre_completo: string
           email?: string | null
           telefono?: string | null
           direccion?: string | null
           id_empresa_asociada?: string | null
-          estado?: string | null 
-          user_id: string 
-          created_at?: string 
-          updated_at?: string 
+          estado?: string | null
+          user_id: string
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -135,7 +135,7 @@ export type Database = {
           estado?: string | null
           user_id?: string
           created_at?: string
-          updated_at?: string 
+          updated_at?: string
         }
         Relationships: [
           {
@@ -220,7 +220,7 @@ export type Database = {
         Args: {}
         Returns: unknown
       }
-      handle_cliente_updated_at: { 
+      handle_cliente_updated_at: {
         Args: {}
         Returns: unknown
       }
@@ -322,3 +322,5 @@ export type Enums<
   : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
     ? Database["public"]["Enums"][PublicEnumNameOrOptions]
     : never
+
+    
