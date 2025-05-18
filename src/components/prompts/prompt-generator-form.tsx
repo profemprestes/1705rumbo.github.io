@@ -20,7 +20,7 @@ const PREDEFINED_PAGE_INTEGRATION_FILES = [
 ];
 
 const PREDEFINED_COMPONENT_INTEGRATION_FILES = [
-  { id: 'homePage', path: 'src/app/page.tsx', label: 'Página de Inicio (src/app/page.tsx)' },
+  { id: 'homePage', path: 'src/app/inicio/page.tsx', label: 'Página de Inicio (src/app/inicio/page.tsx)' },
   { id: 'promptsPage', path: 'src/app/prompts/page.tsx', label: 'Página de Prompts (src/app/prompts/page.tsx)' },
   { id: 'loginPage', path: 'src/app/login/page.tsx', label: 'Página de Login (src/app/login/page.tsx)' },
   { id: 'signupPage', path: 'src/app/signup/page.tsx', label: 'Página de Signup (src/app/signup/page.tsx)' },
@@ -45,7 +45,6 @@ export function PromptGeneratorForm() {
     );
   };
 
-  // Reset selected files when element type changes
   const handleElementTypeChange = (value: ElementType) => {
     setElementType(value);
     setSelectedIntegrationFiles([]);
@@ -79,7 +78,7 @@ export function PromptGeneratorForm() {
       const route = elementName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/gi, '');
       prompt += `   - Instrucción de Ubicación: Crea la página en 'src/app/${route}/page.tsx'. Si ya existe, modifícala.\n`;
     } else {
-      prompt += `   - Instrucción de Ubicación: Crea el archivo del componente. Sugiere la ruta completa (ej. 'src/components/feature/${elementName}.tsx' o similar) o utiliza tu mejor criterio para la ubicación dentro de 'src/components/'. Si ya existe en la ruta sugerida, modifícalo.\n`;
+      prompt += `   - Instrucción de Ubicación: Crea el archivo del componente. Sugiere la ruta completa (ej. 'src/components/feature/${elementName.replace(/\s+/g, '')}.tsx' o similar) o utiliza tu mejor criterio para la ubicación dentro de 'src/components/'. Si ya existe en la ruta sugerida, modifícalo.\n`;
     }
 
 prompt += `
