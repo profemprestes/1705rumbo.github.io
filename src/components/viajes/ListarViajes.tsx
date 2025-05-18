@@ -12,6 +12,7 @@ import { Eye, ListFilter, Loader2, Route, ArrowUpDown, CalendarDays, Users, Truc
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Database, Tables, Enums } from "@/lib/supabase/database.types";
 import { useToast } from "@/hooks/use-toast";
+import { DetalleViaje } from "./DetalleViaje"; // Import the new component
 
 type Viaje = Tables<'viajes'>;
 type Conductor = Tables<'conductores'>;
@@ -22,7 +23,7 @@ type ViajeConDetalles = Viaje & {
   conductores: Pick<Conductor, 'nombre_completo' | 'codigo_conductor'> & {
     empresas: Pick<Empresa, 'nombre'> | null;
   } | null;
-  repartos: [{ count: number }]; // For Supabase count
+  repartos: [{ count: number }]; 
 };
 
 export function ListarViajes() {
@@ -32,6 +33,9 @@ export function ListarViajes() {
   const [viajes, setViajes] = useState<ViajeConDetalles[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedViajeId, setSelectedViajeId] = useState<string | null>(null);
+  const [isDetalleModalOpen, setIsDetalleModalOpen] = useState(false);
 
   const fetchViajes = async () => {
     setLoading(true);
@@ -102,6 +106,11 @@ export function ListarViajes() {
     }
   };
 
+  const handleOpenDetalleModal = (viajeId: string) => {
+    setSelectedViajeId(viajeId);
+    setIsDetalleModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-10">
@@ -126,94 +135,106 @@ export function ListarViajes() {
   }
 
   return (
-    <Card className="shadow-md rounded-lg w-full mt-8">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-foreground flex items-center">
-          <Route className="mr-3 h-7 w-7 text-primary" /> Listado de Viajes
-        </CardTitle>
-        <CardDescription className="text-md mt-1">
-          Visualiza y gestiona los viajes planificados y en curso.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex flex-col sm:flex-row gap-2 items-center">
-          <Input placeholder="Buscar por código de viaje, conductor..." className="max-w-xs" disabled />
-          <Select disabled>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filtrar por estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="planificado">Planificado</SelectItem>
-              <SelectItem value="en_curso">En Curso</SelectItem>
-              <SelectItem value="completado">Completado</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" className="w-full sm:w-auto" disabled>
-            <ListFilter className="mr-2 h-4 w-4" />
-            Más Filtros
-          </Button>
-        </div>
+    <>
+      <Card className="shadow-md rounded-lg w-full mt-8">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-foreground flex items-center">
+            <Route className="mr-3 h-7 w-7 text-primary" /> Listado de Viajes
+          </CardTitle>
+          <CardDescription className="text-md mt-1">
+            Visualiza y gestiona los viajes planificados y en curso.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 flex flex-col sm:flex-row gap-2 items-center">
+            <Input placeholder="Buscar por código de viaje, conductor..." className="max-w-xs" disabled />
+            <Select disabled>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="planificado">Planificado</SelectItem>
+                <SelectItem value="en_curso">En Curso</SelectItem>
+                <SelectItem value="completado">Completado</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" className="w-full sm:w-auto" disabled>
+              <ListFilter className="mr-2 h-4 w-4" />
+              Más Filtros
+            </Button>
+          </div>
 
-        {viajes.length === 0 && !loading ? (
-          <div className="text-center py-10 text-muted-foreground">
-            <p className="text-lg">No hay viajes registrados todavía.</p>
-            <p>Crea repartos para generar viajes asociados.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px] whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Cód. Viaje</Button></TableHead>
-                  <TableHead className="whitespace-nowrap"><Users className="inline-block mr-1 h-4 w-4" />Conductor</TableHead>
-                  <TableHead className="whitespace-nowrap"><Truck className="inline-block mr-1 h-4 w-4" />Vehículo</TableHead>
-                  <TableHead className="whitespace-nowrap"><CalendarDays className="inline-block mr-1 h-4 w-4" />Inicio Plan.</TableHead>
-                  <TableHead className="whitespace-nowrap"><CalendarDays className="inline-block mr-1 h-4 w-4" />Fin Estim. Plan.</TableHead>
-                  <TableHead className="whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Estado</Button></TableHead>
-                  <TableHead className="whitespace-nowrap text-center">N° Repartos</TableHead>
-                  <TableHead className="text-right w-[120px] whitespace-nowrap">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {viajes.map((viaje) => (
-                  <TableRow key={viaje.id} className="hover:bg-muted/50">
-                    <TableCell className="font-mono">{String(viaje.codigo_viaje).padStart(4, '0')}</TableCell>
-                    <TableCell>
-                      {viaje.conductores?.nombre_completo || 'N/A'}
-                      {viaje.conductores?.empresas?.nombre && (
-                        <span className="block text-xs text-muted-foreground">
-                          ({viaje.conductores.empresas.nombre})
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{viaje.vehiculo_descripcion || '-'}</TableCell>
-                    <TableCell>{formatDate(viaje.fecha_hora_inicio_planificado)}</TableCell>
-                    <TableCell>{formatDate(viaje.fecha_hora_fin_estimada_planificado)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={getStatusBadgeVariant(viaje.estado_viaje)}
-                        className={viaje.estado_viaje === 'En Curso' ? 'bg-primary text-primary-foreground' : viaje.estado_viaje === 'Completado' ? 'bg-accent text-accent-foreground' : ''}
-                      >
-                        {viaje.estado_viaje || 'N/A'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {viaje.repartos && viaje.repartos.length > 0 ? viaje.repartos[0].count : 0}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="hover:border-primary hover:text-primary px-2" aria-label={`Ver detalles del viaje ${viaje.codigo_viaje}`} disabled>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {/* Add other actions like edit/cancel viaje if needed */}
-                    </TableCell>
+          {viajes.length === 0 && !loading ? (
+            <div className="text-center py-10 text-muted-foreground">
+              <p className="text-lg">No hay viajes registrados todavía.</p>
+              <p>Crea repartos para generar viajes asociados.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px] whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Cód. Viaje</Button></TableHead>
+                    <TableHead className="whitespace-nowrap"><Users className="inline-block mr-1 h-4 w-4" />Conductor</TableHead>
+                    <TableHead className="whitespace-nowrap"><Truck className="inline-block mr-1 h-4 w-4" />Vehículo</TableHead>
+                    <TableHead className="whitespace-nowrap"><CalendarDays className="inline-block mr-1 h-4 w-4" />Inicio Plan.</TableHead>
+                    <TableHead className="whitespace-nowrap"><CalendarDays className="inline-block mr-1 h-4 w-4" />Fin Estim. Plan.</TableHead>
+                    <TableHead className="whitespace-nowrap"><Button variant="ghost" size="sm" disabled><ArrowUpDown className="mr-2 h-3 w-3" />Estado</Button></TableHead>
+                    <TableHead className="whitespace-nowrap text-center">N° Repartos</TableHead>
+                    <TableHead className="text-right w-[120px] whitespace-nowrap">Acciones</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                </TableHeader>
+                <TableBody>
+                  {viajes.map((viaje) => (
+                    <TableRow key={viaje.id} className="hover:bg-muted/50">
+                      <TableCell className="font-mono">{String(viaje.codigo_viaje).padStart(4, '0')}</TableCell>
+                      <TableCell>
+                        {viaje.conductores?.nombre_completo || 'N/A'}
+                        {viaje.conductores?.empresas?.nombre && (
+                          <span className="block text-xs text-muted-foreground">
+                            ({viaje.conductores.empresas.nombre})
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>{viaje.vehiculo_descripcion || '-'}</TableCell>
+                      <TableCell>{formatDate(viaje.fecha_hora_inicio_planificado)}</TableCell>
+                      <TableCell>{formatDate(viaje.fecha_hora_fin_estimada_planificado)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={getStatusBadgeVariant(viaje.estado_viaje)}
+                          className={viaje.estado_viaje === 'En Curso' ? 'bg-primary text-primary-foreground' : viaje.estado_viaje === 'Completado' ? 'bg-accent text-accent-foreground' : ''}
+                        >
+                          {viaje.estado_viaje || 'N/A'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {viaje.repartos && viaje.repartos.length > 0 ? viaje.repartos[0].count : 0}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="hover:border-primary hover:text-primary px-2" 
+                          aria-label={`Ver detalles del viaje ${viaje.codigo_viaje}`} 
+                          onClick={() => handleOpenDetalleModal(viaje.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <DetalleViaje 
+        viajeId={selectedViajeId}
+        isOpen={isDetalleModalOpen}
+        setIsOpen={setIsDetalleModalOpen}
+      />
+    </>
   );
 }
