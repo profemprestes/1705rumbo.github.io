@@ -2,14 +2,14 @@
 'use client';
 
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SteeringWheel } from 'lucide-react';
+import {  Truck } from 'lucide-react';
 
 export function HeroConductores() {
   return (
     <Card className="shadow-lg rounded-lg mb-6">
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-primary flex items-center">
-          <SteeringWheel className="mr-3 h-8 w-8" />
+          < Truck className="mr-3 h-8 w-8" />
           Gestión de Conductores
         </CardTitle>
         <CardDescription className="text-lg mt-1">

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Edit3, Trash2, Eye, Loader2, SteeringWheel } from "lucide-react";
+import { PlusCircle, Edit3, Trash2, Eye, Loader2, Truck } from "lucide-react";
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Database, Tables, Enums } from "@/lib/supabase/database.types";
 import { CargaConductor } from "./CargaConductor";
@@ -141,7 +141,7 @@ export function ListarConductores() {
         <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <CardTitle className="text-2xl font-bold text-foreground flex items-center">
-              <SteeringWheel className="mr-2 h-6 w-6" /> Listado de Conductores
+              < Truck className="mr-2 h-6 w-6" /> Listado de Conductores
             </CardTitle>
             <CardDescription className="text-md mt-1">
               Gestiona la información de los conductores registrados.
