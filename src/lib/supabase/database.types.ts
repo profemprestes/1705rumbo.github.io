@@ -50,6 +50,53 @@ export type Database = {
           }
         ]
       }
+      empresas: { // New table for companies
+        Row: {
+          id: string // UUID
+          codigo_empresa: number // SERIAL, auto-incrementing
+          nombre: string
+          industria: string | null
+          email_contacto: string | null
+          estado: string | null // e.g., 'Activo', 'Inactivo'
+          direccion: string | null
+          user_id: string | null // UUID, references auth.users.id
+          created_at: string // TIMESTAMPTZ
+          updated_at: string // TIMESTAMPTZ
+        }
+        Insert: {
+          id?: string // Default is gen_random_uuid()
+          codigo_empresa?: never // SERIAL, handled by database
+          nombre: string
+          industria?: string | null
+          email_contacto?: string | null
+          estado?: string | null // Default is 'Activo'
+          direccion?: string | null
+          user_id: string // Associated user
+          created_at?: string // Default is NOW()
+          updated_at?: string // Default is NOW()
+        }
+        Update: {
+          id?: string
+          codigo_empresa?: never // Should not be updated directly
+          nombre?: string
+          industria?: string | null
+          email_contacto?: string | null
+          estado?: string | null
+          direccion?: string | null
+          user_id?: string // Typically not changed after creation
+          created_at?: string
+          updated_at?: string // Handled by trigger
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       // Add your view definitions here
@@ -62,6 +109,10 @@ export type Database = {
       //   Args: {}
       //   Returns: unknown // Actually returns a trigger type
       // }
+      handle_empresa_updated_at: { // Function for empresas table
+        Args: {}
+        Returns: unknown 
+      }
     }
     Enums: {
       // Add your enum definitions here
